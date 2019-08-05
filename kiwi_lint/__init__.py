@@ -17,6 +17,8 @@ from .empty import EmptyClassChecker
 from .nested_definition import NestedDefinitionChecker
 from .missing_permissions import MissingPermissionsChecker
 from .auto_field import AutoFieldChecker
+from .one_to_one_field import OneToOneFieldChecker
+from .views import ClassBasedViewChecker
 
 
 def register(linter):
@@ -34,3 +36,5 @@ def register(linter):
     linter.register_checker(NestedDefinitionChecker(linter))
     linter.register_checker(MissingPermissionsChecker(linter))
     linter.register_checker(AutoFieldChecker(linter))
+    linter.register_checker(OneToOneFieldChecker(linter))
+    linter.register_checker(ClassBasedViewChecker(linter))

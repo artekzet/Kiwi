@@ -108,7 +108,7 @@ class BaseCaseForm(forms.Form):
     def populate(self, product_id=None):
         if product_id:
             self.fields['category'].queryset = Category.objects.filter(
-                product__id=product_id)
+                product_id=product_id)
         else:
             self.fields['category'].queryset = Category.objects.all()
 
@@ -228,9 +228,9 @@ class BaseCaseSearchForm(forms.Form):
         """Limit the query to fit the plan"""
         if product_id:
             self.fields['category'].queryset = Category.objects.filter(
-                product__id=product_id)
+                product_id=product_id)
             self.fields['component'].queryset = Component.objects.filter(
-                product__id=product_id)
+                product_id=product_id)
 
 
 # todo BaseCaseSearchForm is never used stand-alone and nothing else
@@ -272,39 +272,14 @@ class QuickSearchCaseForm(forms.Form):
 
 class CloneCaseForm(forms.Form):
     case = forms.ModelMultipleChoiceField(
-        label='Test Case',
         queryset=TestCase.objects.all(),
-        widget=forms.CheckboxSelectMultiple()
     )
     plan = forms.ModelMultipleChoiceField(
-        label='Test Plan',
         queryset=TestPlan.objects.all(),
-        widget=forms.CheckboxSelectMultiple()
-    )
-    copy_case = forms.BooleanField(
-        label='Create a copy',
-        help_text='Create a copy (Unchecking will create a link to selected '
-                  'case)',
-        required=False
-    )
-    maintain_case_orignal_author = forms.BooleanField(
-        label='Keep original author',
-        help_text='Keep original author (Unchecking will make me as author '
-                  'of the copied test case)',
-        required=False
-    )
-    maintain_case_orignal_default_tester = forms.BooleanField(
-        label='Keep original default tester',
-        help_text='Keep original default tester (Unchecking will make me as '
-                  'default tester of the copied test case)',
-        required=False
-    )
-    copy_component = forms.BooleanField(
-        label='Copy test case components to the product of selected Test Plan',
-        help_text='Copy test case components to the product of selected Test Plan ('
-                  'Unchecking will remove components from copied test case)',
-        required=False
+        required=False,
     )
 
     def populate(self, case_ids):
-        self.fields['case'].queryset = TestCase.objects.filter(case_id__in=case_ids)
+        self.fields['case'].queryset = TestCase.objects.filter(pk__in=case_ids)
+        plan_ids = self.fields['case'].queryset.values_list('plan', flat=True)
+        self.fields['plan'].queryset = TestPlan.objects.filter(pk__in=plan_ids)

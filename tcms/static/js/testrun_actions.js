@@ -4,6 +4,21 @@ Nitrate.TestRuns.Execute = {}
 Nitrate.TestRuns.AssignCase = {}
 
 
+function toggleDiv(link, divId) {
+  var link = jQ(link);
+  var div = jQ('#' + divId);
+  var show = 'Show All';
+  var hide = 'Hide All';
+  div.toggle();
+  var text = link.html();
+  if (text !== show) {
+    link.html(show);
+  } else {
+    link.html(hide);
+  }
+}
+
+
 Nitrate.TestRuns.Details.on_load = function() {
   setAddTagAutocomplete();
 
@@ -157,10 +172,6 @@ Nitrate.TestRuns.Details.on_load = function() {
     jQ('div.progress-failed').attr('style', 'width:' + failedPercent + '%');
   });
 
-  jQ('#btn_edit').bind('click', function() {
-    var params = jQ(this).data('params');
-    window.location.href = params[0] + '?from_plan=' + params[1];
-  });
   jQ('#btn_clone').bind('click', function() {
     postToURL(jQ(this).data('param'), serializeCaseRunFromInputList('id_table_cases','case_run'));
   });

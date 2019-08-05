@@ -1,5 +1,7 @@
 default: help
 
+PATH_TO_SITE_PACKAGES = $(shell python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
+
 FLAKE8_EXCLUDE=.git
 
 .PHONY: flake8
@@ -52,7 +54,8 @@ check: flake8 test
 .PHONY: pylint
 pylint:
 	pylint -d missing-docstring *.py kiwi_lint/
-	PYTHONPATH=.:./tcms/ pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d missing-docstring -d duplicate-code tcms/
+	PYTHONPATH=.:./tcms/ pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d missing-docstring -d duplicate-code -d class-based-view-required tcms/
+	PYTHONPATH=. DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d all -e class-based-view-required tcms/
 
 .PHONY: bandit
 bandit:
@@ -61,8 +64,8 @@ bandit:
 
 .PHONY: bandit_site_packages
 bandit_site_packages:
-	if [ -d "/home/travis/virtualenv/python3.6.3/lib/python3.6/site-packages/" ]; then \
-	    bandit -a vuln -r /home/travis/virtualenv/python3.6.3/lib/python3.6/site-packages/; \
+	if [ -d "$(PATH_TO_SITE_PACKAGES)" ]; then \
+	    bandit -a vuln -r $(PATH_TO_SITE_PACKAGES); \
 	fi
 
 

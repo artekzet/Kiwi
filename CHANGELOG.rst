@@ -1,6 +1,176 @@
 Change Log
 ==========
 
+Kiwi TCMS 6.11 (02 Aug 2019)
+----------------------------
+
+
+**IMPORTANT:** this is a security and improvement update which updates
+many internal dependencies, adds 2 new Telemetry reports, updates
+TestPlan and TestCase cloning pages and provides several other
+improvements and bug fixes. Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Security
+~~~~~~~~
+
+- Update Django from 2.2.2 to 2.2.4, see
+  `release notes <https://docs.djangoproject.com/en/2.2/releases/2.2.4/>`_
+- Update marked to version 0.7.0, see
+  `release notes <https://github.com/markedjs/marked/releases/tag/v0.7.0>`_
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update python-gitlab from 1.8.0 to 1.10.0
+- Update django-grappelli from 2.12.3 to 2.13.1
+- Update django-simple-history from 2.7.2 to 2.7.3
+- Update django-attachments to 1.4.1
+- Update PyGithub from 1.43.7 to 1.43.8
+- Update patternfly to version 3.59.3
+- Update prismjs to version 1.17.0
+- Add Testing Status Matrix telemetry
+- Add Testing Execution Trends telemetry
+- Make it possible to attach files directly inside Test Plan page
+- Make it possible to attach files directly inside Test Execution widget
+- Convert Clone TestPlan page to Patternfly, greatly simplify the UI
+  and update behavior:
+
+  - Cloned TP author will always be set to the current user
+  - Cloned TC author will always be set to the current user
+  - Always keep the original default tester for test cases when cloning
+  - Refactor to class based view
+  - Fix a problem where Version values failed form validation b/c
+    we've been trying to filter based on non-existing field
+    ``product_id`` instead of just ``product``
+  - Fixes a problem where erroneous Version value was shown in the UI
+
+- Convert Clone TestCase page to Patternfly, greatly simplify the UI
+  and update behavior. Fixes
+  `Issue #838 <https://github.com/kiwitcms/Kiwi/issues/838/>`_:
+
+  - Allow cloning into multiple test plans
+  - Remove 'Filter another plan' option. Will be replaced by
+    'Add TP to TC', see
+    `Issue #1021 <https://github.com/kiwitcms/Kiwi/issues/1021>`_
+  - Always update sortkey. Cloned TC will show at the bottom of the
+    TestPlan
+  - Cloned TC author will always be set to the current user
+  - Always keep the original default tester
+
+
+API
+~~~
+
+- First parameter of RPC method ``Bug.report()``
+  has been renamed from ``test_case_run_id`` to ``execution_id``. This may
+  break existing API scripts which try to pass this argument by name
+  instead of by position!
+
+
+Settings
+~~~~~~~~
+
+- Allow ENV variables ``KIWI_USE_TZ`` and ``KIWI_TIME_ZONE`` to control
+  settings ``USE_TZ`` and ``TIME_ZONE``. Fixes
+  `Issue #982 <https://github.com/kiwitcms/Kiwi/issues/982/>`_ (Jason Yi)
+
+
+Bug fixes
+~~~~~~~~~
+
+- Fix wrong permission label when deleting comments. Fixes
+  `Issue #1010 <https://github.com/kiwitcms/Kiwi/issues/1010/>`_
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Disable unnecessary pylint messages for missing-permission-required
+  checker (Svetlomir Balevski)
+- Remove unnecessary ``from_plan`` URL variable making cleaner URLs
+- kiwi_lint: Don't check nested functions for permissions
+- Remove and regroup JavaScript functions
+- Instruct pyup-bot to monitor ``requirements/tarballs.txt`` for updates
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `French translation <https://crowdin.com/project/kiwitcms/fr#>`_
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+
+
+
+Kiwi TCMS 6.10 (18 June 2019)
+-----------------------------
+
+
+**IMPORTANT:** this is a small security and improvement update.
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Security
+~~~~~~~~
+
+- Update Django from 2.2.1 to 2.2.2 for medium severity
+  CVE-2019-12308 (XSS), CVE-2019-11358 (jQuery).
+  `More info <https://docs.djangoproject.com/en/2.2/releases/2.2.2/>`_
+- Add missing permission checks for menus in Test run page UI template.
+  Permission check added for TestExecution status and comment menu.
+  References `Issue #716 <https://github.com/kiwitcms/Kiwi/issues/716>`_
+- Re-enable static analysis with ``bandit`` and ``Coverity Scan`` in
+  Travis CI (Svetlomir Balevski)
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update psycopg2 from 2.8.2 to 2.8.3
+- Update markdown from 3.1 to 3.1.1
+- Update patternfly to version 3.59.2
+- Override ``PasswordResetForm`` because ``Site.objects.get_current()``
+  didn't produce correct results when working with ``kiwitcms-tenants``
+- Show column ``is_active`` in user admin page
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Add test for ``email_case_deletion()`` (Rik)
+- New linter to warn about usage of ``AutoField``. Fixes
+  `Issue #737 <https://github.com/kiwitcms/Kiwi/issues/737>`_ (Ivo Donchev, HackSoft)
+- New linter to discover empty classed. Fixes
+  `Issue #739 <https://github.com/kiwitcms/Kiwi/issues/739>`_ (Daniel Goshev)
+- New linter to warn about usage of ``OneToOneField``. Fixes
+  `Issue #735 <https://github.com/kiwitcms/Kiwi/issues/735>`_ (George Goranov)
+- New linter to warn about usage of function based views. Fixes
+  `Issue #734 <https://github.com/kiwitcms/Kiwi/issues/734>`_ (Yavor Lulchev, Uber)
+- New linter to discover Python files in directories without ``__init__.py``. Fixes
+  `Issue #790 <https://github.com/kiwitcms/Kiwi/issues/790>`_
+
+
 
 Kiwi TCMS 6.9 (15 May 2019)
 ---------------------------
@@ -845,8 +1015,8 @@ Translations
 
 
 
-Kiwi TCMS 6.2 (02 Nov 2018)
----------------------------
+Kiwi TCMS 6.2 (02 Nov 2018) - PiterPy Edition
+---------------------------------------------
 
 **IMPORTANT:** this is a small release that removes squashed migrations
 from previous releases and includes a few improvements.

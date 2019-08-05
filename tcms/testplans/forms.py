@@ -52,7 +52,7 @@ class BasePlanForm(forms.Form):
     def populate(self, product_id):
         if product_id:
             self.fields['product_version'].queryset = Version.objects.filter(
-                product__id=product_id)
+                product_id=product_id)
         else:
             self.fields['product_version'].queryset = Version.objects.all()
 
@@ -141,40 +141,26 @@ class SearchPlanForm(forms.Form):
     def populate(self, product_id=None):
         if product_id:
             self.fields['version'].queryset = Version.objects.filter(
-                product__id=product_id)
+                product_id=product_id)
         else:
             self.fields['version'].queryset = Version.objects.none()
 
 
-class ClonePlanForm(BasePlanForm):
-    name = forms.CharField(label="Plan name", required=False)
-    type = forms.ModelChoiceField(
-        label="Type",
-        queryset=PlanType.objects.all(),
-        required=False,
+class ClonePlanForm(forms.Form):
+    name = forms.CharField(required=True)
+
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.all(),
+        empty_label=None,
     )
-    keep_orignal_author = forms.BooleanField(
-        label='Keep orignal author',
-        help_text='Unchecking will make me the author of the copied plan',
-        required=False,
+    version = forms.ModelChoiceField(
+        queryset=Version.objects.none(),
+        empty_label=None,
     )
-    link_testcases = forms.BooleanField(
-        label='All Test Cases',
-        required=False
-    )
+
     copy_testcases = forms.BooleanField(
         label='Create a copy',
         help_text='Unchecking will create a link to selected plans',
-        required=False
-    )
-    maintain_case_orignal_author = forms.BooleanField(
-        label='Maintain original authors',
-        help_text='Unchecking will make me the author of the copied cases',
-        required=False
-    )
-    keep_case_default_tester = forms.BooleanField(
-        label='Keep Default Tester',
-        help_text='Unchecking will make me the default tester of copied cases',
         required=False
     )
     set_parent = forms.BooleanField(
@@ -183,3 +169,10 @@ class ClonePlanForm(BasePlanForm):
                   'plan.',
         required=False
     )
+
+    def populate(self, product_pk):
+        if product_pk:
+            self.fields['version'].queryset = Version.objects.filter(
+                product_id=product_pk)
+        else:
+            self.fields['version'].queryset = Version.objects.none()

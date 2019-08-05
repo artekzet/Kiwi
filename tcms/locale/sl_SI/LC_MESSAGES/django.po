@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiwitcms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-16 10:33+0000\n"
-"PO-Revision-Date: 2019-05-15 06:48\n"
+"POT-Creation-Date: 2019-07-25 07:44+0000\n"
+"PO-Revision-Date: 2019-07-25 11:23\n"
 "Last-Translator: Alexander Todorov (atodorov)\n"
 "Language-Team: Slovenian\n"
 "Language: sl_SI\n"
@@ -16,7 +16,7 @@ msgstr ""
 "X-Crowdin-Language: sl\n"
 "X-Crowdin-File: /master/tcms/locale/en/LC_MESSAGES/django.po\n"
 
-#: tcms/core/ajax.py:158 tcms/testruns/views.py:696
+#: tcms/core/ajax.py:158 tcms/testruns/views.py:697
 #, python-format
 msgid "User %s not found!"
 msgstr "Uporabnika %s ni bilo mogoče najti!"
@@ -26,10 +26,11 @@ msgid "Core customized comments"
 msgstr "Jedrni komentarji - po meri"
 
 #: tcms/core/contrib/comments/forms.py:14
-#: tcms/templates/run/get_case_runs.html:138
+#: tcms/templates/run/get_case_runs.html:142
 #: tcms/testcases/templates/testcases/get.html:311
 #: tcms/testcases/templates/testcases/get.html:337
 #: tcms/testcases/templates/testcases/get.html:374
+#: tcms/testplans/templates/testplans/clone.html:13
 #: tcms/testplans/templates/testplans/mutable.html:23
 #: tcms/testplans/templates/testplans/search.html:11
 msgid "Name"
@@ -40,12 +41,12 @@ msgid "Email address"
 msgstr "E-poštni naslov"
 
 #: tcms/core/contrib/comments/forms.py:21
-#: tcms/templates/run/get_case_runs.html:142 tcms/templates/run/report.html:138
+#: tcms/templates/run/get_case_runs.html:146 tcms/templates/run/report.html:138
 msgid "URL"
 msgstr "URL naslov"
 
 #: tcms/core/contrib/comments/forms.py:25
-#: tcms/templates/run/get_case_runs.html:50
+#: tcms/templates/run/get_case_runs.html:52
 msgid "Comment"
 msgstr "Komentar"
 
@@ -72,48 +73,48 @@ msgstr "Čas posodobitve %(history_date)s\n"
 msgid "Base URL is not configured! See <a href=\"%(doc_url)s\">documentation</a> and <a href=\"%(admin_url)s\">change it</a>"
 msgstr "URL aplikacije ni nastavljen! <a href=\"%(doc_url)s\">Preverite dokumentacijo</a> in ga <a href=\"%(admin_url)s\">spremenite</a>"
 
-#: tcms/kiwi_auth/admin.py:28
+#: tcms/kiwi_auth/admin.py:29
 msgid "This email address is already in use"
 msgstr "Ta e-poštni naslov je že v uporabi"
 
-#: tcms/kiwi_auth/admin.py:84
+#: tcms/kiwi_auth/admin.py:86
 msgid "Personal info"
 msgstr "Osebne informacije"
 
-#: tcms/kiwi_auth/admin.py:85
+#: tcms/kiwi_auth/admin.py:87
 msgid "Permissions"
 msgstr "Dovoljenja"
 
-#: tcms/kiwi_auth/forms.py:33
+#: tcms/kiwi_auth/forms.py:35
 msgid "A user with that email already exists."
 msgstr "Uporabnik s tem e-mail naslovom že obstaja."
 
-#: tcms/kiwi_auth/forms.py:61
+#: tcms/kiwi_auth/forms.py:63
 #, python-format
 msgid "Your new %s account confirmation"
 msgstr "Informacije o uporabniškem računu %s ."
 
-#: tcms/kiwi_auth/views.py:50
+#: tcms/kiwi_auth/views.py:54
 msgid "Your account has been created, please check your mailbox for confirmation"
 msgstr "Uporabniški račun je bil uspešno kreiran, preverite vaš e-poštni nabiralnik za potrditveno povezavo preko katere ga aktivirate"
 
-#: tcms/kiwi_auth/views.py:56
+#: tcms/kiwi_auth/views.py:60
 msgid "Your account has been created, but you need an administrator to activate it"
 msgstr "Uporabniški račun je bil ustvarjen. Pred uporabo ga mora potrditi še administrator"
 
-#: tcms/kiwi_auth/views.py:61
+#: tcms/kiwi_auth/views.py:65
 msgid "Following is the administrator list"
 msgstr "Seznam administratorjev"
 
-#: tcms/kiwi_auth/views.py:103
+#: tcms/kiwi_auth/views.py:107
 msgid "This activation key no longer exists in the database"
 msgstr "Aktivacijska koda ne obstaja več v bazi"
 
-#: tcms/kiwi_auth/views.py:108
+#: tcms/kiwi_auth/views.py:112
 msgid "This activation key has expired"
 msgstr "Aktivacijska koda je potekla"
 
-#: tcms/kiwi_auth/views.py:120
+#: tcms/kiwi_auth/views.py:124
 msgid "Your account has been activated successfully"
 msgstr "Vaš račun je bil uspešno aktiviran"
 
@@ -161,35 +162,43 @@ msgstr "Testiranje"
 msgid "Breakdown"
 msgstr "Razčlenitev"
 
-#: tcms/settings/common.py:121
+#: tcms/settings/common.py:108
+msgid "Status matrix"
+msgstr "Matrika statusov"
+
+#: tcms/settings/common.py:109
+msgid "Execution trends"
+msgstr ""
+
+#: tcms/settings/common.py:123
 msgid "ADMIN"
 msgstr "ADMINISTRACIJA"
 
-#: tcms/settings/common.py:122
+#: tcms/settings/common.py:124
 msgid "Users and groups"
 msgstr "Uporabniki in skupine"
 
-#: tcms/settings/common.py:124
+#: tcms/settings/common.py:126
 msgid "Everything else"
 msgstr "Ostalo"
 
-#: tcms/settings/common.py:130
+#: tcms/settings/common.py:132
 msgid "Report an Issue"
 msgstr "Prijavi težavo"
 
-#: tcms/settings/common.py:131
+#: tcms/settings/common.py:133
 msgid "Ask for help on StackOverflow"
 msgstr "Postavite vprašanje glede uporabe Kiwi TCMS na StackOverflow"
 
-#: tcms/settings/common.py:132
-msgid "User Guide"
-msgstr "Uporabniški vodnik"
-
-#: tcms/settings/common.py:133
-msgid "Administration Guide"
-msgstr "Administracijski vodnik"
-
 #: tcms/settings/common.py:134
+msgid "User Guide"
+msgstr "Uporabniški priročnik"
+
+#: tcms/settings/common.py:135
+msgid "Administration Guide"
+msgstr "Priročnik za administratorje"
+
+#: tcms/settings/common.py:136
 msgid "API Help"
 msgstr "Pomoč za API"
 
@@ -202,22 +211,25 @@ msgstr "Nov uporabnik - potrebna potrditev uporabniškega računa"
 msgid "NEW: TestRun #%(pk)d - %(summary)s"
 msgstr "NOVO: Testiranje #%(pk)d - %(summary)s"
 
-#: tcms/telemetry/api.py:59
+#: tcms/telemetry/api.py:60
 msgid "OTHER"
-msgstr ""
+msgstr "DRUGO"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:5
 msgid "Testing Breakdown"
 msgstr "Razčlenitev testiranja"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:14
-#: tcms/templates/case/clone.html:46 tcms/templates/dashboard.html:49
-#: tcms/templates/plan/get.html:62 tcms/templates/plan/preview.html:15
-#: tcms/templates/run/get.html:122 tcms/templates/run/report.html:35
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:14
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:13
+#: tcms/templates/dashboard.html:49 tcms/templates/plan/get.html:62
+#: tcms/templates/plan/preview.html:15 tcms/templates/run/get.html:122
+#: tcms/templates/run/report.html:35
 #: tcms/testcases/templates/testcases/get.html:59
 #: tcms/testcases/templates/testcases/get.html:314
 #: tcms/testcases/templates/testcases/mutable.html:37
 #: tcms/testcases/templates/testcases/search.html:41
+#: tcms/testplans/templates/testplans/clone.html:20
 #: tcms/testplans/templates/testplans/mutable.html:32
 #: tcms/testplans/templates/testplans/search.html:42
 #: tcms/testplans/templates/testplans/search.html:111
@@ -228,18 +240,24 @@ msgid "Product"
 msgstr "Izdelek"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:23
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:43
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:42
 #: tcms/templates/run/assign_case.html:32 tcms/templates/run/get.html:67
 #: tcms/templates/run/report.html:24
 msgid "Test Plan"
 msgstr "Baza testni scenarijev"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:33
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:51
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:50
 #: tcms/testcases/templates/testcases/search.html:16
 #: tcms/testplans/templates/testplans/search.html:16
 msgid "After"
 msgstr "Po"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:45
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:63
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:62
 #: tcms/testcases/templates/testcases/search.html:27
 #: tcms/testplans/templates/testplans/search.html:28
 msgid "Before"
@@ -249,10 +267,10 @@ msgstr "Pred"
 msgid "Total"
 msgstr "Skupaj"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:72
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:71
 #: tcms/templates/plan/get_cases.html:107
 #: tcms/templates/plan/get_cases.html:187
-#: tcms/templates/run/get_case_runs.html:76 tcms/templates/run/report.html:67
+#: tcms/templates/run/get_case_runs.html:80 tcms/templates/run/report.html:67
 #: tcms/templates/run/table_executions.html:20
 #: tcms/testcases/templates/testcases/get.html:93
 #: tcms/testcases/templates/testcases/mutable.html:92
@@ -261,18 +279,54 @@ msgstr "Skupaj"
 msgid "Automated"
 msgstr "Avtomatizirano"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:76
-#: tcms/templates/run/get_case_runs.html:79
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:75
+#: tcms/templates/run/get_case_runs.html:83
 msgid "Manual"
 msgstr "Ročno"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:83
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:81
 msgid "Priorities"
 msgstr "Prioritete"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:88
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:86
 msgid "Categories"
 msgstr "Kategorije"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:5
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:5
+msgid "Testing Status Matrix"
+msgstr "Matrika statusov testiranja"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:23
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:22
+#: tcms/templates/plan/get.html:66 tcms/templates/plan/preview.html:19
+#: tcms/testplans/templates/testplans/clone.html:35
+#: tcms/testplans/templates/testplans/mutable.html:47
+#: tcms/testplans/templates/testplans/search.html:52
+#: tcms/testplans/templates/testplans/search.html:112
+#: tcms/testruns/templates/testruns/search.html:34
+#: tcms/testruns/templates/testruns/search.html:94
+msgid "Version"
+msgstr "Verzija"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:32
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:31
+#: tcms/templates/case/get_details_case_run.html:75
+#: tcms/templates/run/assign_case.html:24 tcms/templates/run/get.html:128
+#: tcms/templates/run/report.html:38
+#: tcms/testruns/templates/testruns/mutable.html:31
+#: tcms/testruns/templates/testruns/search.html:44
+#: tcms/testruns/templates/testruns/search.html:95
+msgid "Build"
+msgstr "Build"
+
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:79
+msgid "Test case"
+msgstr "Testni scenariji"
+
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:79
+msgid "Test run"
+msgstr "Testiranje"
 
 #: tcms/templates/404.html:5 tcms/templates/404.html:16
 msgid "Page not found"
@@ -290,149 +344,6 @@ msgstr "Ali ste prepričani, da želite izbrisati to priponko?"
 msgid "the leading open source test case management system"
 msgstr "vodilni odprtokodni sistem za upravljanje s testnimi scenariji"
 
-#: tcms/templates/case/attachment.html:29
-#: tcms/templates/plan/attachment.html:30
-msgid "Note: Each attachment size limit is"
-msgstr "Opozorilo: Omejitev velikosti priložene datoteke je"
-
-#: tcms/templates/case/attachment.html:35
-#: tcms/templates/plan/attachment.html:36
-#: tcms/templates/plan/get_attachments.html:13
-msgid "File name"
-msgstr "Ime datoteke"
-
-#: tcms/templates/case/attachment.html:36
-#: tcms/templates/plan/attachment.html:37
-#: tcms/templates/plan/get_attachments.html:14
-msgid "Submitter"
-msgstr "Avtor"
-
-#: tcms/templates/case/attachment.html:37
-#: tcms/templates/plan/attachment.html:38
-#: tcms/templates/plan/get_attachments.html:15
-msgid "Create date"
-msgstr "Ustvarjeno dne"
-
-#: tcms/templates/case/attachment.html:38
-#: tcms/templates/management/get_tag.html:10
-#: tcms/templates/plan/attachment.html:39
-#: tcms/templates/plan/get_attachments.html:16
-msgid "Action"
-msgstr "Dejanje"
-
-#: tcms/templates/case/clone.html:24
-msgid "Clone TestCase(s)"
-msgstr "Kloniraj testne scenarije"
-
-#: tcms/templates/case/clone.html:28
-msgid "Select Plan"
-msgstr "Izberi bazo testni scenarijev"
-
-#: tcms/templates/case/clone.html:32
-msgid "Use the same Plan"
-msgstr "Uporabi isto bazo testnih scenarijev"
-
-#: tcms/templates/case/clone.html:37
-msgid "Filter another plan"
-msgstr "Filtriraj drugo bazo testnih scenarijev"
-
-#: tcms/templates/case/clone.html:42 tcms/templates/plan/get_cases.html:161
-#: tcms/templates/plan/search_case.html:80
-#: tcms/templates/run/assign_case.html:71
-#: tcms/testcases/templates/testcases/get.html:310
-#: tcms/testcases/templates/testcases/search.html:132
-#: tcms/testplans/templates/testplans/search.html:108
-#: tcms/testruns/templates/testruns/search.html:90
-msgid "ID"
-msgstr "ID"
-
-#: tcms/templates/case/clone.html:50 tcms/templates/plan/clone.html:37
-#: tcms/templates/run/get.html:73 tcms/templates/run/report.html:27
-msgid "Product Version"
-msgstr "Verzija izdelka"
-
-#: tcms/templates/case/clone.html:54
-#: tcms/templates/case/clone_select_plan.html:9 tcms/templates/plan/get.html:70
-#: tcms/templates/plan/preview.html:23
-msgid "Plan Type"
-msgstr "Tip baze testnih scenarijev"
-
-#: tcms/templates/case/clone.html:58
-msgid "Plan Author"
-msgstr "Avtor baze testnih scenarijev"
-
-#: tcms/templates/case/clone.html:62 tcms/templates/case/get_details.html:32
-#: tcms/templates/management/get_tag.html:6
-#: tcms/templates/plan/get_cases.html:127
-#: tcms/templates/run/get_case_runs.html:109
-#: tcms/testcases/templates/testcases/search.html:111
-#: tcms/testplans/templates/testplans/search.html:87
-#: tcms/testruns/templates/testruns/search.html:74
-msgid "Tag"
-msgstr "Značka"
-
-#: tcms/templates/case/clone.html:66
-#: tcms/templates/case/clone_select_plan.html:8
-msgid "Plan Summary"
-msgstr "Opis baze testnih scenarijev"
-
-#: tcms/templates/case/clone.html:70
-#: tcms/testplans/templates/testplans/mutable.html:139
-#: tcms/testplans/templates/testplans/search.html:93
-msgid "Active"
-msgstr "Aktiven"
-
-#: tcms/templates/case/clone.html:93
-msgid "Case(s)"
-msgstr "Scenarij(i)"
-
-#: tcms/templates/case/clone.html:97
-msgid "Clone Settings"
-msgstr "Kloniraj nastavitve"
-
-#: tcms/templates/case/clone.html:99
-msgid "Case Properties"
-msgstr "Lastnosti scenarija"
-
-#: tcms/templates/case/clone_select_plan.html:2
-msgid "Plan"
-msgstr "Baza testnih scenarijev"
-
-#: tcms/templates/case/clone_select_plan.html:10
-#: tcms/templates/plan/get.html:58 tcms/templates/plan/get_cases.html:95
-#: tcms/templates/plan/get_cases.html:171 tcms/templates/plan/preview.html:11
-#: tcms/templates/plan/search_case.html:82
-#: tcms/templates/run/assign_case.html:73
-#: tcms/testcases/templates/testcases/get.html:43
-#: tcms/testcases/templates/testcases/get.html:312
-#: tcms/testcases/templates/testcases/mutable.html:147
-#: tcms/testcases/templates/testcases/search.html:106
-#: tcms/testcases/templates/testcases/search.html:140
-#: tcms/testplans/templates/testplans/mutable.html:103
-#: tcms/testplans/templates/testplans/search.html:74
-#: tcms/testplans/templates/testplans/search.html:114
-#: tcms/testruns/templates/testruns/mutable.html:93
-msgid "Author"
-msgstr "Avtor"
-
-#: tcms/templates/case/clone_select_plan.html:11
-msgid "Is Active"
-msgstr "Aktiven"
-
-#: tcms/templates/case/clone_select_plan.html:19
-#: tcms/testcases/templates/testcases/search.html:94
-msgid "Yes"
-msgstr "Da"
-
-#: tcms/templates/case/clone_select_plan.html:19
-#: tcms/testcases/templates/testcases/search.html:97
-msgid "No"
-msgstr "Ne"
-
-#: tcms/templates/case/clone_select_plan.html:22
-msgid "There are no plans"
-msgstr "Ni baz testnih scenarijev"
-
 #: tcms/templates/case/get_details.html:8
 #: tcms/testcases/templates/testcases/mutable.html:100
 msgid "Text"
@@ -443,12 +354,12 @@ msgid "Attachment"
 msgstr "Priponka"
 
 #: tcms/templates/case/get_details.html:21
-#: tcms/templates/case/get_details_case_run.html:159
+#: tcms/templates/case/get_details_case_run.html:154
 msgid "No attachment found"
 msgstr "Ni priponk"
 
 #: tcms/templates/case/get_details.html:24
-#: tcms/templates/case/get_details_case_run.html:165
+#: tcms/templates/case/get_details_case_run.html:164
 #: tcms/templates/plan/get_cases.html:123
 #: tcms/testcases/templates/testcases/search.html:61
 #: tcms/testcases/templates/testcases/search.html:136
@@ -456,12 +367,22 @@ msgid "Component"
 msgstr "Komponenta"
 
 #: tcms/templates/case/get_details.html:29
-#: tcms/templates/case/get_details_case_run.html:170
+#: tcms/templates/case/get_details_case_run.html:169
 msgid "No component found"
 msgstr "Ni komponent"
 
+#: tcms/templates/case/get_details.html:32
+#: tcms/templates/management/get_tag.html:6
+#: tcms/templates/plan/get_cases.html:127
+#: tcms/templates/run/get_case_runs.html:113
+#: tcms/testcases/templates/testcases/search.html:111
+#: tcms/testplans/templates/testplans/search.html:87
+#: tcms/testruns/templates/testruns/search.html:74
+msgid "Tag"
+msgstr "Značka"
+
 #: tcms/templates/case/get_details.html:37
-#: tcms/templates/case/get_details_case_run.html:181
+#: tcms/templates/case/get_details_case_run.html:180
 #: tcms/templates/management/get_tag.html:28
 msgid "No tag found"
 msgstr "Ni značk"
@@ -489,7 +410,7 @@ msgid "Notes"
 msgstr "Opombe"
 
 #: tcms/templates/case/get_details.html:64
-#: tcms/templates/run/get_case_runs.html:191
+#: tcms/templates/run/get_case_runs.html:195
 #: tcms/templates/run/table_executions.html:25
 msgid "Comments"
 msgstr "Komentarji"
@@ -508,15 +429,6 @@ msgid "Run Date"
 msgstr "Pričetek testiranja"
 
 #: tcms/templates/case/get_details_case_run.html:75
-#: tcms/templates/run/assign_case.html:24 tcms/templates/run/get.html:128
-#: tcms/templates/run/report.html:38
-#: tcms/testruns/templates/testruns/mutable.html:31
-#: tcms/testruns/templates/testruns/search.html:44
-#: tcms/testruns/templates/testruns/search.html:95
-msgid "Build"
-msgstr "Build"
-
-#: tcms/templates/case/get_details_case_run.html:75
 msgid "Text Version"
 msgstr "Verzija besedila"
 
@@ -526,11 +438,11 @@ msgid "Report"
 msgstr "Poročilo"
 
 #: tcms/templates/case/get_details_case_run.html:82
-#: tcms/templates/case/get_details_case_run.html:192
+#: tcms/templates/case/get_details_case_run.html:191
 #: tcms/templates/management/get_tag.html:37
 #: tcms/templates/run/get_case_runs.html:21
-#: tcms/templates/run/get_case_runs.html:45
-#: tcms/templates/run/get_case_runs.html:52
+#: tcms/templates/run/get_case_runs.html:47
+#: tcms/templates/run/get_case_runs.html:55
 #: tcms/testcases/templates/testcases/get.html:351
 #: tcms/testcases/templates/testcases/get.html:388
 msgid "Add"
@@ -544,7 +456,7 @@ msgstr "Iz testnega scenarija"
 msgid "No log recorded"
 msgstr "Ni zabeleženih vnosov v dnevniško datoteko"
 
-#: tcms/templates/case/get_details_case_run.html:192
+#: tcms/templates/case/get_details_case_run.html:191
 msgid "Test Link"
 msgstr "Povezava do testnega scenarija"
 
@@ -566,7 +478,7 @@ msgstr "Nadzorna plošča"
 
 #: tcms/templates/dashboard.html:8
 msgid "Test executions"
-msgstr "Izvedeni testi"
+msgstr "Aktivna testiranja"
 
 #: tcms/templates/dashboard.html:18 tcms/templates/run/get.html:85
 #: tcms/templates/run/report.html:44
@@ -594,11 +506,11 @@ msgstr "Nobeno testiranje vam trenutno ni dodeljeno"
 
 #: tcms/templates/dashboard.html:42
 msgid "Your Test plans"
-msgstr "Moji testni repozitoriji"
+msgstr "Moje baze testnih scenarijev"
 
 #: tcms/templates/dashboard.html:48
 msgid "TestPlan"
-msgstr "Repozitorij testov"
+msgstr "Baza testnih scenarijev"
 
 #: tcms/templates/dashboard.html:50
 #: tcms/testcases/templates/testcases/get.html:313
@@ -701,11 +613,16 @@ msgstr "Testni scenariji"
 msgid "Runs"
 msgstr "Testiranja"
 
+#: tcms/templates/management/get_tag.html:10
+#: tcms/templates/plan/get_attachments.html:10
+msgid "Action"
+msgstr "Dejanje"
+
 #: tcms/templates/management/get_tag.html:21
 #: tcms/templates/management/get_tag.html:23
 #: tcms/templates/plan/get_cases.html:32 tcms/templates/plan/get_cases.html:34
 #: tcms/templates/run/get_case_runs.html:24
-#: tcms/templates/run/get_case_runs.html:46
+#: tcms/templates/run/get_case_runs.html:48
 msgid "Remove"
 msgstr "Odstrani"
 
@@ -779,30 +696,6 @@ msgstr "Uredi"
 msgid "No test case was found in this plan."
 msgstr "Baza testnih scenarijev je prazna."
 
-#: tcms/templates/plan/clone.html:4 tcms/templates/plan/get.html:47
-msgid "Clone Plan"
-msgstr "Kloniraj bazo testnih scenarijev"
-
-#: tcms/templates/plan/clone.html:23
-msgid "Clone TestPlan"
-msgstr "Kloniraj bazo testnih scenarijev"
-
-#: tcms/templates/plan/clone.html:29
-msgid "New Plan Name"
-msgstr "Naziv nove baze testnih scenarijev"
-
-#: tcms/templates/plan/clone.html:33
-msgid "Copy to Product"
-msgstr "Kopiraj v produkt"
-
-#: tcms/templates/plan/clone.html:44
-msgid "Copy Settings"
-msgstr "Kopiraj nastavitve"
-
-#: tcms/templates/plan/clone.html:51
-msgid "Copy"
-msgstr "Kopiraj"
-
 #: tcms/templates/plan/get.html:46
 msgid "Edit Plan"
 msgstr "Uredi bazo scenarijev"
@@ -810,6 +703,10 @@ msgstr "Uredi bazo scenarijev"
 #: tcms/templates/plan/get.html:46
 msgid "Edit test plan"
 msgstr "Uredi bazo testnih scenarijev"
+
+#: tcms/templates/plan/get.html:47
+msgid "Clone Plan"
+msgstr "Kloniraj bazo testnih scenarijev"
 
 #: tcms/templates/plan/get.html:47
 msgid "Clone this plan to other product"
@@ -827,14 +724,25 @@ msgstr "Izbriši bazo scenarijev"
 msgid "Delete test plan"
 msgstr "Izbriši bazo testnih scenarijev"
 
-#: tcms/templates/plan/get.html:66 tcms/templates/plan/preview.html:19
-#: tcms/testplans/templates/testplans/mutable.html:47
-#: tcms/testplans/templates/testplans/search.html:52
-#: tcms/testplans/templates/testplans/search.html:112
-#: tcms/testruns/templates/testruns/search.html:34
-#: tcms/testruns/templates/testruns/search.html:94
-msgid "Version"
-msgstr "Verzija"
+#: tcms/templates/plan/get.html:58 tcms/templates/plan/get_cases.html:95
+#: tcms/templates/plan/get_cases.html:171 tcms/templates/plan/preview.html:11
+#: tcms/templates/plan/search_case.html:82
+#: tcms/templates/run/assign_case.html:73
+#: tcms/testcases/templates/testcases/get.html:43
+#: tcms/testcases/templates/testcases/get.html:312
+#: tcms/testcases/templates/testcases/mutable.html:147
+#: tcms/testcases/templates/testcases/search.html:106
+#: tcms/testcases/templates/testcases/search.html:140
+#: tcms/testplans/templates/testplans/mutable.html:103
+#: tcms/testplans/templates/testplans/search.html:74
+#: tcms/testplans/templates/testplans/search.html:114
+#: tcms/testruns/templates/testruns/mutable.html:93
+msgid "Author"
+msgstr "Avtor"
+
+#: tcms/templates/plan/get.html:70 tcms/templates/plan/preview.html:23
+msgid "Plan Type"
+msgstr "Tip baze testnih scenarijev"
 
 #: tcms/templates/plan/get.html:76 tcms/templates/plan/preview.html:31
 msgid "Reference Link"
@@ -873,7 +781,7 @@ msgid "Attachments"
 msgstr "Priloge"
 
 #: tcms/templates/plan/get.html:125 tcms/templates/plan/get_cases.html:76
-#: tcms/templates/run/get.html:91 tcms/templates/run/get_case_runs.html:122
+#: tcms/templates/run/get.html:91 tcms/templates/run/get_case_runs.html:126
 #: tcms/testcases/templates/testcases/get.html:330
 #: tcms/testcases/templates/testcases/search.html:141
 #: tcms/testplans/templates/testplans/search.html:115
@@ -889,11 +797,19 @@ msgstr "Drevesni pogled"
 msgid "The document for this plan hasn't been written yet."
 msgstr "Dokumentacija za bazo testnih scenarijev še ni bila zapisana."
 
-#: tcms/templates/plan/get_attachments.html:6
-msgid "Add attachment"
-msgstr "Dodaj priponko"
+#: tcms/templates/plan/get_attachments.html:7
+msgid "File name"
+msgstr "Ime datoteke"
 
-#: tcms/templates/plan/get_attachments.html:29
+#: tcms/templates/plan/get_attachments.html:8
+msgid "Submitter"
+msgstr "Avtor"
+
+#: tcms/templates/plan/get_attachments.html:9
+msgid "Create date"
+msgstr "Ustvarjeno dne"
+
+#: tcms/templates/plan/get_attachments.html:23
 msgid "No attachments"
 msgstr "Ni prilog"
 
@@ -920,7 +836,8 @@ msgid "print view of selected cases"
 msgstr "natisni izbrane testne scenarije"
 
 #: tcms/templates/plan/get_cases.html:27 tcms/templates/plan/get_cases.html:29
-#: tcms/testcases/views.py:578
+#: tcms/testcases/templates/testcases/clone.html:40 tcms/testcases/views.py:578
+#: tcms/testplans/templates/testplans/clone.html:68
 msgid "Clone"
 msgstr "Podvoji"
 
@@ -952,7 +869,7 @@ msgstr "Spremeni privzeto osebo zadolženo za testiranje"
 #: tcms/templates/plan/get_cases.html:192
 #: tcms/templates/plan/search_case.html:86 tcms/templates/run/get.html:144
 #: tcms/templates/run/get_case_runs.html:35
-#: tcms/templates/run/get_case_runs.html:91 tcms/templates/run/report.html:70
+#: tcms/templates/run/get_case_runs.html:95 tcms/templates/run/report.html:70
 #: tcms/templates/run/table_executions.html:24
 #: tcms/testcases/templates/testcases/get.html:74
 #: tcms/testcases/templates/testcases/mutable.html:68
@@ -966,7 +883,7 @@ msgstr "Status"
 #: tcms/templates/plan/get_cases.html:202
 #: tcms/templates/plan/search_case.html:84
 #: tcms/templates/run/assign_case.html:76
-#: tcms/templates/run/get_case_runs.html:100
+#: tcms/templates/run/get_case_runs.html:104
 #: tcms/templates/run/table_executions.html:22
 #: tcms/testcases/templates/testcases/get.html:79
 #: tcms/testcases/templates/testcases/mutable.html:80
@@ -994,7 +911,7 @@ msgid "Re-order cases"
 msgstr "Razvrsti scenarije"
 
 #: tcms/templates/plan/get_cases.html:81
-#: tcms/templates/run/get_case_runs.html:127
+#: tcms/templates/run/get_case_runs.html:131
 msgid "No tags in cases"
 msgstr "Scenariji ne vsebujejo oznak"
 
@@ -1022,6 +939,16 @@ msgstr "Elementov na stran"
 #: tcms/templates/plan/get_cases.html:146
 msgid "Also select all cases that are not yet shown below."
 msgstr "Izberi tudi scenarije, kateri še niso prikazani."
+
+#: tcms/templates/plan/get_cases.html:161
+#: tcms/templates/plan/search_case.html:80
+#: tcms/templates/run/assign_case.html:71
+#: tcms/testcases/templates/testcases/get.html:310
+#: tcms/testcases/templates/testcases/search.html:132
+#: tcms/testplans/templates/testplans/search.html:108
+#: tcms/testruns/templates/testruns/search.html:90
+msgid "ID"
+msgstr "ID"
 
 #: tcms/templates/plan/get_cases.html:166
 #: tcms/templates/run/assign_case.html:72
@@ -1083,7 +1010,7 @@ msgid "Normal Search"
 msgstr "Iskanje"
 
 #: tcms/templates/plan/search_case.html:81
-#: tcms/templates/run/get_case_runs.html:64 tcms/templates/run/report.html:66
+#: tcms/templates/run/get_case_runs.html:68 tcms/templates/run/report.html:66
 #: tcms/templates/run/table_executions.html:17
 #: tcms/testcases/templates/testcases/mutable.html:18
 #: tcms/testcases/templates/testcases/search.html:11
@@ -1161,7 +1088,7 @@ msgstr "zdaj"
 
 #: tcms/templates/registration/password_reset_confirm.html:22
 #: tcms/templates/registration/registration_form.html:31
-#: tcms/templates/run/get_case_runs.html:194
+#: tcms/templates/run/get_case_runs.html:198
 msgid "Confirm"
 msgstr "Potrdi"
 
@@ -1242,6 +1169,10 @@ msgstr "Datum nastanka"
 msgid "Selected"
 msgstr "Izbrano"
 
+#: tcms/templates/run/get.html:73 tcms/templates/run/report.html:27
+msgid "Product Version"
+msgstr "Verzija izdelka"
+
 #: tcms/templates/run/get.html:115 tcms/templates/run/report.html:51
 msgid "Note"
 msgstr "Opomba"
@@ -1288,19 +1219,19 @@ msgid "Assign this case(s) to other people"
 msgstr "Dodeli scenarij(e) drugim testerjem"
 
 #: tcms/templates/run/get_case_runs.html:30
-#: tcms/templates/run/get_case_runs.html:72
+#: tcms/templates/run/get_case_runs.html:76
 #: tcms/templates/run/table_executions.html:19
 msgid "Assignee"
 msgstr "Tester"
 
-#: tcms/templates/run/get_case_runs.html:43
+#: tcms/templates/run/get_case_runs.html:45
 #: tcms/templates/run/status_statistics.html:27
 #: tcms/templates/run/table_executions.html:23
 #: tcms/testcases/templates/testcases/get.html:284
 msgid "Bugs"
 msgstr "Napake"
 
-#: tcms/templates/run/get_case_runs.html:68
+#: tcms/templates/run/get_case_runs.html:72
 #: tcms/testcases/templates/testcases/get.html:48
 #: tcms/testcases/templates/testcases/mutable.html:30
 #: tcms/testcases/templates/testcases/mutable.html:170
@@ -1312,37 +1243,37 @@ msgstr "Napake"
 msgid "Default tester"
 msgstr "Privzeti tester"
 
-#: tcms/templates/run/get_case_runs.html:80
+#: tcms/templates/run/get_case_runs.html:84
 msgid "Auto"
 msgstr "Samodejno"
 
-#: tcms/templates/run/get_case_runs.html:86
+#: tcms/templates/run/get_case_runs.html:90
 msgid "Bug"
 msgstr "Napaka"
 
-#: tcms/templates/run/get_case_runs.html:88
+#: tcms/templates/run/get_case_runs.html:92
 msgid "You can type multiple bugs by comma."
 msgstr "Več napak ločite z vejico."
 
-#: tcms/templates/run/get_case_runs.html:135
+#: tcms/templates/run/get_case_runs.html:139
 msgid "All these fields are required."
 msgstr "Izbrana polja so obvezna."
 
-#: tcms/templates/run/get_case_runs.html:138
+#: tcms/templates/run/get_case_runs.html:142
 msgid "64 characters at most"
 msgstr "največ 64 znakov"
 
-#: tcms/templates/run/get_case_runs.html:169 tcms/templates/run/report.html:120
+#: tcms/templates/run/get_case_runs.html:173 tcms/templates/run/report.html:120
 #: tcms/testcases/templates/testcases/search.html:117
 #: tcms/testcases/templates/testcases/search.html:119
 msgid "Bug ID"
 msgstr "ID napake"
 
-#: tcms/templates/run/get_case_runs.html:176
+#: tcms/templates/run/get_case_runs.html:180
 msgid "Check to add Test Case(s) to Issue Tracker"
 msgstr "Označite če želite dodati testne scenarije v sistem za beleženje napak"
 
-#: tcms/templates/run/get_case_runs.html:195
+#: tcms/templates/run/get_case_runs.html:199
 msgid "Cancel"
 msgstr "Prekliči"
 
@@ -1466,6 +1397,18 @@ msgstr "**Scenarij**: ... kaj testiramo..\n"
 msgid "DELETED: TestCase #%(pk)d - %(summary)s"
 msgstr "Izbrisan: Testni scenarij #%(pk)d - %(summary)s"
 
+#: tcms/testcases/templates/testcases/clone.html:5
+msgid "Clone TestCase"
+msgstr ""
+
+#: tcms/testcases/templates/testcases/clone.html:12
+msgid "Add new TC into TP"
+msgstr ""
+
+#: tcms/testcases/templates/testcases/clone.html:27
+msgid "Selected TC"
+msgstr ""
+
 #: tcms/testcases/templates/testcases/get.html:98
 #: tcms/testcases/templates/testcases/mutable.html:107
 msgid "Script"
@@ -1520,6 +1463,7 @@ msgid "New TestCase"
 msgstr "Nov testni scenarij"
 
 #: tcms/testcases/templates/testcases/mutable.html:38
+#: tcms/testplans/templates/testplans/clone.html:21
 #: tcms/testplans/templates/testplans/mutable.html:33
 msgid "add new Product"
 msgstr "dodaj produkt"
@@ -1578,6 +1522,14 @@ msgstr "Iskanje testnih scenarijev"
 msgid "Test case summary"
 msgstr "Povzetek testnega scenarija"
 
+#: tcms/testcases/templates/testcases/search.html:94
+msgid "Yes"
+msgstr "Da"
+
+#: tcms/testcases/templates/testcases/search.html:97
+msgid "No"
+msgstr "Ne"
+
 #: tcms/testcases/templates/testcases/search.html:100
 msgid "Both"
 msgstr "Oboje"
@@ -1613,14 +1565,39 @@ msgstr "Zgodovina"
 msgid "Delete"
 msgstr "Izbriši"
 
-#: tcms/testcases/views.py:760 tcms/testruns/views.py:429
-#: tcms/testruns/views.py:507
+#: tcms/testcases/views.py:760 tcms/testruns/views.py:430
+#: tcms/testruns/views.py:508
 msgid "At least one TestCase is required"
 msgstr "Vsaj en testni scenarij je zahtevan"
 
-#: tcms/testcases/views.py:897
+#: tcms/testcases/views.py:849
 msgid "TestCase cloning was successful"
 msgstr "Kloniranje testnega scenarija je uspelo"
+
+#: tcms/testplans/templates/testplans/clone.html:5
+msgid "Clone TestPlan"
+msgstr "Kloniraj bazo testnih scenarijev"
+
+#: tcms/testplans/templates/testplans/clone.html:37
+#: tcms/testplans/templates/testplans/mutable.html:49
+msgid "add new Version"
+msgstr "dodaj verzijo"
+
+#: tcms/testplans/templates/testplans/clone.html:54
+msgid "Clone TCs"
+msgstr ""
+
+#: tcms/testplans/templates/testplans/clone.html:57
+msgid "Clone or link existing TCs into new TP"
+msgstr ""
+
+#: tcms/testplans/templates/testplans/clone.html:61
+msgid "Parent TP"
+msgstr ""
+
+#: tcms/testplans/templates/testplans/clone.html:64
+msgid "Set the source TP as parent of new TP"
+msgstr ""
 
 #: tcms/testplans/templates/testplans/mutable.html:10
 msgid "Edit TestPlan"
@@ -1629,10 +1606,6 @@ msgstr "Uredi testni načrt"
 #: tcms/testplans/templates/testplans/mutable.html:12
 msgid "Create new TestPlan"
 msgstr "Ustvari nov testni plan"
-
-#: tcms/testplans/templates/testplans/mutable.html:49
-msgid "add new Version"
-msgstr "dodaj verzijo"
 
 #: tcms/testplans/templates/testplans/mutable.html:80
 msgid "Parent ID"
@@ -1656,11 +1629,16 @@ msgstr "Obvesti me, ko:"
 
 #: tcms/testplans/templates/testplans/mutable.html:125
 msgid "TestPlan is updated"
-msgstr "Repozitorij testov je posodobljen"
+msgstr "Baza testnih scenarijev je posodobljena"
 
 #: tcms/testplans/templates/testplans/mutable.html:131
 msgid "Test cases are updated"
 msgstr "Testni scenariji so posodobljeni"
+
+#: tcms/testplans/templates/testplans/mutable.html:139
+#: tcms/testplans/templates/testplans/search.html:93
+msgid "Active"
+msgstr "Aktiven"
 
 #: tcms/testplans/templates/testplans/search.html:5
 msgid "Search test plans"
@@ -1675,15 +1653,15 @@ msgstr "Naziv baze testni scenarijev"
 msgid "Test plan"
 msgstr "Baza testni scenarijev"
 
-#: tcms/testplans/views.py:344
+#: tcms/testplans/views.py:340
 msgid "TestPlan is required"
-msgstr "Testni repozitorij je obvezen"
+msgstr "Baza testnih scenarijev je obvezna"
 
-#: tcms/testplans/views.py:565
+#: tcms/testplans/views.py:517
 msgid "At least one test plan is required for print"
 msgstr "Za tiskanje je potrebno izbrati vsaj eno bazo testnih scenarijev"
 
-#: tcms/testplans/views.py:573
+#: tcms/testplans/views.py:525
 #, python-format
 msgid "Test Plan \"%s\" does not exist"
 msgstr "Testiranje \"%s\" ne obstaja"
@@ -1751,25 +1729,25 @@ msgstr "ID načrta"
 
 #: tcms/testruns/templates/testruns/search.html:18
 msgid "TestPlan ID"
-msgstr "ID repozitorija testov"
+msgstr "ID baze testnih scenarijev testov"
 
 #: tcms/testruns/views.py:50
 msgid "Creating a TestRun requires a TestPlan, select one"
-msgstr "V kolikor želite kreirati novo testiranje morate imeti ustvarjen testni repozitorij"
+msgstr "V kolikor želite kreirati novo testiranje morate imeti ustvarjeno bazo testnih scenarijev"
 
 #: tcms/testruns/views.py:60
 msgid "Creating a TestRun requires at least one TestCase"
 msgstr "V kolikor želite kreirati novo testiranje morate dodati najmanj en testni scenarij"
 
-#: tcms/testruns/views.py:433
+#: tcms/testruns/views.py:434
 msgid "Clone of "
 msgstr "Klon "
 
-#: tcms/testruns/views.py:516
+#: tcms/testruns/views.py:517
 msgid "TestCase ID is not a valid integer"
 msgstr "ID testnega scenarija ni celo število"
 
-#: tcms/testruns/views.py:644
+#: tcms/testruns/views.py:645
 #, python-format
 msgid "%d CaseRun(s) updated:"
 msgstr "%d testiranje posodobljeno:"
@@ -1834,3 +1812,4 @@ msgstr "NAPAKA"
 #: vinaigrette-deleteme.py:13
 msgid "WAIVED"
 msgstr "IZPUŠČEN"
+

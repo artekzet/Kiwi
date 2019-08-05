@@ -24,53 +24,6 @@ Nitrate.TestCases.Clone = {};
 }());
 
 
-Nitrate.TestCases.Clone.on_load = function() {
-    $('#id_product').change(update_version_select_from_product);
-    if (!$('#id_version').val().length) {
-        update_version_select_from_product();
-    }
-
-  jQ('#id_form_search_plan').bind('submit', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-
-    var url = '/plans/';
-    var container = jQ('#id_plan_container');
-    container.show();
-
-    jQ.ajax({
-      'url': url,
-      'type': 'GET',
-      'data': jQ(this).serialize(),
-      'success': function (data, textStatus, jqXHR) {
-        container.html(data);
-      }
-    });
-  });
-
-  jQ('#id_use_filterplan').bind('click', function(e) {
-    jQ('#id_form_search_plan :input').attr('disabled', false);
-    jQ('#id_plan_id').val('');
-    jQ('#id_plan_id').attr('name', '');
-    jQ('#id_copy_case').attr('checked', true);
-  });
-
-  if (jQ('#id_use_sameplan').length) {
-    jQ('#id_use_sameplan').bind('click', function(e) {
-      jQ('#id_form_search_plan :input').attr('disabled', true);
-      jQ('#id_plan_id').val(jQ('#value_plan_id').val());
-      jQ('#id_plan_id').attr('name', 'plan');
-      jQ('#id_plan_container').html('<div class="ajax_loading"></div>').hide();
-      jQ('#id_copy_case').attr('checked', false);
-    });
-  }
-
-  jQ('.js-cancel-button').bind('click', function() {
-    window.history.go('-1');
-  });
-
-};
-
 
 /*
  * Used for expanding test case in test plan page specifically
@@ -303,18 +256,4 @@ function serializeCaseForm2(form, table, serialized, exclude_cases) {
     data['case'] = serializeCaseFromInputList(table);
   }
   return data;
-}
-
-function toggleDiv(link, divId) {
-  var link = jQ(link);
-  var div = jQ('#' + divId);
-  var show = 'Show All';
-  var hide = 'Hide All';
-  div.toggle();
-  var text = link.html();
-  if (text !== show) {
-    link.html(show);
-  } else {
-    link.html(hide);
-  }
 }

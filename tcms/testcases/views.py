@@ -27,7 +27,6 @@ from tcms.testruns.models import TestExecution
 from tcms.testruns.models import TestExecutionStatus
 from tcms.testcases.forms import NewCaseForm, \
     SearchCaseForm, CaseNotifyForm, CloneCaseForm
-from tcms.testplans.forms import SearchPlanForm
 from tcms.testcases.fields import MultipleEmailField
 
 
@@ -129,11 +128,6 @@ class NewCaseView(TemplateView):
 
         if form.is_valid() and notify_form.is_valid():
             test_case = self.create_test_case(form, notify_form, test_plan)
-            if test_plan:
-                return HttpResponseRedirect(
-                    '%s?from_plan=%s' % (reverse('testcases-get', args=[test_case.pk]),
-                                         test_plan.pk))
-
             return HttpResponseRedirect(reverse('testcases-get', args=[test_case.pk]))
 
         context_data = {
@@ -346,7 +340,8 @@ def get_selected_testcases(request):
     return TestCase.objects.filter(pk__in=method.getlist('case'))
 
 
-def load_more_cases(request, template_name='plan/cases_rows.html'):
+def load_more_cases(request,  # pylint: disable=missing-permission-required
+                    template_name='plan/cases_rows.html'):
     """Loading more TestCases"""
     plan = plan_from_request_or_none(request)
     cases = []
@@ -450,7 +445,7 @@ def list_all(request):
 
 
 @require_GET
-def search(request):
+def search(request):  # pylint: disable=missing-permission-required
     """
         Shows the search form which uses JSON RPC to fetch the resuts
     """
@@ -466,7 +461,7 @@ def search(request):
     return render(request, 'testcases/search.html', context_data)
 
 
-class SimpleTestCaseView(TemplateView):
+class SimpleTestCaseView(TemplateView):  # pylint: disable=missing-permission-required
     """Simple read-only TestCase View used in TestPlan page"""
 
     template_name = 'case/get_details.html'
@@ -491,7 +486,7 @@ class SimpleTestCaseView(TemplateView):
         return data
 
 
-class TestCaseExecutionDetailPanelView(TemplateView):
+class TestCaseExecutionDetailPanelView(TemplateView):  # pylint: disable=missing-permission-required
     """Display execution detail in run page"""
 
     template_name = 'case/get_details_case_run.html'
@@ -557,26 +552,19 @@ def get(request, case_id):
     # Render the page
     context_data = {
         'test_case': test_case,
-        'test_case_runs': tcrs,
+        'executions': tcrs,
     }
-
-    url_params = "?case=%d" % test_case.pk
-    case_edit_url = reverse('testcases-edit', args=[test_case.pk])
-    test_plan = request.GET.get('from_plan', 0)
-    if test_plan:
-        url_params += "&from_plan=%s" % test_plan
-        case_edit_url += "?from_plan=%s" % test_plan
 
     with modify_settings(
             MENU_ITEMS={'append': [
                 ('...', [
                     (
                         _('Edit'),
-                        case_edit_url
+                        reverse('testcases-edit', args=[test_case.pk])
                     ),
                     (
                         _('Clone'),
-                        reverse('testcases-clone') + url_params
+                        reverse('testcases-clone') + "?case=%d" % test_case.pk
                     ),
                     (
                         _('History'),
@@ -676,9 +664,6 @@ def edit(request, case_id):
         raise Http404
 
     test_plan = plan_from_request_or_none(request)
-    from_plan = ""
-    if test_plan:
-        from_plan = "?from_plan=%d" % test_plan.pk
 
     if request.method == "POST":
         form = NewCaseForm(request.POST)
@@ -696,7 +681,7 @@ def edit(request, case_id):
             update_case_email_settings(test_case, n_form)
 
             return HttpResponseRedirect(
-                reverse('testcases-get', args=[case_id, ]) + from_plan
+                reverse('testcases-get', args=[case_id, ])
             )
 
     else:
@@ -749,21 +734,17 @@ def edit(request, case_id):
 
 
 @permission_required('testcases.add_testcase')
-def clone(request, template_name='case/clone.html'):
+def clone(request, template_name='testcases/clone.html'):
     """Clone one case or multiple case into other plan or plans"""
 
     request_data = getattr(request, request.method)
 
-    if 'selectAll' not in request_data and 'case' not in request_data:
+    if 'case' not in request_data:
         messages.add_message(request,
                              messages.ERROR,
                              _('At least one TestCase is required'))
         # redirect back where we came from
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-    test_plan_src = plan_from_request_or_none(request)
-    test_plan = None
-    search_plan_form = SearchPlanForm()
 
     # Do the clone action
     if request.method == 'POST':
@@ -773,113 +754,66 @@ def clone(request, template_name='case/clone.html'):
         if clone_form.is_valid():
             tcs_src = clone_form.cleaned_data['case']
             for tc_src in tcs_src:
-                if clone_form.cleaned_data['copy_case']:
-                    tc_dest = TestCase.objects.create(
-                        is_automated=tc_src.is_automated,
-                        script=tc_src.script,
-                        arguments=tc_src.arguments,
-                        extra_link=tc_src.extra_link,
-                        summary=tc_src.summary,
-                        requirement=tc_src.requirement,
-                        case_status=TestCaseStatus.get_proposed(),
-                        category=tc_src.category,
-                        priority=tc_src.priority,
-                        notes=tc_src.notes,
-                        text=tc_src.text,
-                        author=clone_form.cleaned_data[
-                            'maintain_case_orignal_author'] and
-                        tc_src.author or request.user,
-                        default_tester=clone_form.cleaned_data[
-                            'maintain_case_orignal_default_tester'] and
-                        tc_src.author or request.user,
-                    )
+                tc_dest = TestCase.objects.create(
+                    is_automated=tc_src.is_automated,
+                    script=tc_src.script,
+                    arguments=tc_src.arguments,
+                    extra_link=tc_src.extra_link,
+                    summary=tc_src.summary,
+                    requirement=tc_src.requirement,
+                    case_status=TestCaseStatus.get_proposed(),
+                    category=tc_src.category,
+                    priority=tc_src.priority,
+                    notes=tc_src.notes,
+                    text=tc_src.text,
+                    author=request.user,
+                    default_tester=tc_src.default_tester,
+                )
 
-                    for test_plan in clone_form.cleaned_data['plan']:
-                        # copy a case and keep origin case's sortkey
-                        if test_plan_src:
-                            try:
-                                tcp = TestCasePlan.objects.get(plan=test_plan_src,
-                                                               case=tc_src)
-                                sortkey = tcp.sortkey
-                            except ObjectDoesNotExist:
-                                sortkey = test_plan.get_case_sortkey()
-                        else:
-                            sortkey = test_plan.get_case_sortkey()
+                # apply tags as well
+                for tag in tc_src.tag.all():
+                    tc_dest.add_tag(tag=tag)
 
-                        test_plan.add_case(tc_dest, sortkey)
+                for test_plan in clone_form.cleaned_data['plan']:
+                    # add new TC to selected TP
+                    sortkey = test_plan.get_case_sortkey()
+                    test_plan.add_case(tc_dest, sortkey)
 
-                    for tag in tc_src.tag.all():
-                        tc_dest.add_tag(tag=tag)
-                else:
-                    tc_dest = tc_src
-                    tc_dest.author = request.user
-                    if clone_form.cleaned_data['maintain_case_orignal_author']:
-                        tc_dest.author = tc_src.author
-
-                    tc_dest.default_tester = request.user
-                    if clone_form.cleaned_data['maintain_case_orignal_default_tester']:
-                        tc_dest.default_tester = tc_src.default_tester
-
+                    # clone TC category b/c we may be cloning a 'linked'
+                    # TC which has a different Product that doesn't have the
+                    # same categories yet
+                    try:
+                        tc_category = test_plan.product.category.get(
+                            name=tc_src.category.name
+                        )
+                    except ObjectDoesNotExist:
+                        tc_category = test_plan.product.category.create(
+                            name=tc_src.category.name,
+                            description=tc_src.category.description,
+                        )
+                    tc_dest.category = tc_category
                     tc_dest.save()
 
-                    for test_plan in clone_form.cleaned_data['plan']:
-                        # create case link and keep origin plan's sortkey
-                        if test_plan_src:
-                            try:
-                                tcp = TestCasePlan.objects.get(plan=test_plan_src,
-                                                               case=tc_dest)
-                                sortkey = tcp.sortkey
-                            except ObjectDoesNotExist:
-                                sortkey = test_plan.get_case_sortkey()
-                        else:
-                            sortkey = test_plan.get_case_sortkey()
-
-                        test_plan.add_case(tc_dest, sortkey)
-
-                # Add the cases to plan
-                for test_plan in clone_form.cleaned_data['plan']:
-                    # Clone the categories to new product
-                    if clone_form.cleaned_data['copy_case']:
+                    # clone TC components b/c we may be cloning a 'linked'
+                    # TC which has a different Product that doesn't have the
+                    # same components yet
+                    for component in tc_src.component.all():
                         try:
-                            tc_category = test_plan.product.category.get(
-                                name=tc_src.category.name
-                            )
+                            new_c = test_plan.product.component.get(name=component.name)
                         except ObjectDoesNotExist:
-                            tc_category = test_plan.product.category.create(
-                                name=tc_src.category.name,
-                                description=tc_src.category.description,
+                            new_c = test_plan.product.component.create(
+                                name=component.name,
+                                initial_owner=request.user,
+                                description=component.description,
                             )
-
-                        tc_dest.category = tc_category
-                        tc_dest.save()
-                        del tc_category
-
-                    # Clone the components to new product
-                    if clone_form.cleaned_data['copy_component'] and \
-                            clone_form.cleaned_data['copy_case']:
-                        for component in tc_src.component.all():
-                            try:
-                                new_c = test_plan.product.component.get(
-                                    name=component.name
-                                )
-                            except ObjectDoesNotExist:
-                                new_c = test_plan.product.component.create(
-                                    name=component.name,
-                                    initial_owner=request.user,
-                                    description=component.description,
-                                )
-
-                            tc_dest.add_component(new_c)
+                        tc_dest.add_component(new_c)
 
             # Detect the number of items and redirect to correct one
             cases_count = len(clone_form.cleaned_data['case'])
             plans_count = len(clone_form.cleaned_data['plan'])
 
             if cases_count == 1 and plans_count == 1:
-                return HttpResponseRedirect('%s?from_plan=%s' % (
-                    reverse('testcases-get', args=[tc_dest.pk, ]),
-                    test_plan.pk
-                ))
+                return HttpResponseRedirect(reverse('testcases-get', args=[tc_dest.pk, ]))
 
             if cases_count == 1:
                 return HttpResponseRedirect(
@@ -901,40 +835,10 @@ def clone(request, template_name='case/clone.html'):
         # Initial the clone case form
         clone_form = CloneCaseForm(initial={
             'case': selected_cases,
-            'copy_case': False,
-            'maintain_case_orignal_author': False,
-            'maintain_case_orignal_default_tester': False,
-            'copy_component': True,
         })
         clone_form.populate(case_ids=selected_cases)
 
-    # Generate search plan form
-    if request_data.get('from_plan'):
-        test_plan = TestPlan.objects.get(plan_id=request_data['from_plan'])
-        search_plan_form = SearchPlanForm(
-            initial={'product': test_plan.product_id, 'is_active': True})
-        search_plan_form.populate(product_id=test_plan.product_id)
-
-    submit_action = request_data.get('submit', None)
     context = {
-        'test_plan': test_plan,
-        'search_form': search_plan_form,
-        'clone_form': clone_form,
-        'submit_action': submit_action,
-    }
-    return render(request, template_name, context)
-
-
-@permission_required('testcases.add_testcaseattachment')
-def attachment(request, case_id, template_name='case/attachment.html'):
-    """Manage test case attachments"""
-
-    test_case = get_object_or_404(TestCase, case_id=case_id)
-    test_plan = plan_from_request_or_none(request)
-
-    context = {
-        'testplan': test_plan,
-        'testcase': test_case,
-        'limit': settings.FILE_UPLOAD_MAX_SIZE,
+        'form': clone_form,
     }
     return render(request, template_name, context)

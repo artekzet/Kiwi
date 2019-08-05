@@ -3,7 +3,6 @@
 import datetime
 
 from django.utils.decorators import method_decorator
-from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -93,8 +92,9 @@ class NewTestPlanView(View):
 
 
 @require_GET
-def get_all(request):
+def get_all(request):  # pylint: disable=missing-permission-required
     """Display all testplans"""
+    # TODO: this function should be deleted
     # todo: this function can be replaced with the existing JSON-RPC search
     # TODO: this function now only performs a forward feature, no queries
     # need here. All of it will be removed in the future.
@@ -118,15 +118,9 @@ def get_all(request):
         # Set search active plans only by default
         search_form = SearchPlanForm(initial={'is_active': True})
 
-    # fixme: this view is scheduled for deletion
-    # TestCase clone workflow must be redesigned so it uses
-    # the TestPlan search page
-    template_name = ''
-    if request.GET.get('action') == 'clone_case':
-        template_name = 'case/clone_select_plan.html'
-        tps = tps.order_by('name')
+    template_name = 'non-existing.html'
 
-    # used in tree preview & TestCase add plan
+    # used in tree preview only
     # fixme: must be replaced by JSON RPC and the
     # JavaScript dialog that displays the preview
     # should be converted to Patternfly
@@ -158,7 +152,7 @@ def get_all(request):
 
 
 @require_GET
-def search(request):
+def search(request):  # pylint: disable=missing-permission-required
     form = SearchPlanForm(request.GET)
     form.populate(product_id=request.GET.get('product'))
 
@@ -254,7 +248,8 @@ def calculate_stats_for_testplans(plans):
     return plans
 
 
-def get(request, plan_id, slug=None, template_name='plan/get.html'):
+def get(request,  # pylint: disable=missing-permission-required
+        plan_id, slug=None, template_name='plan/get.html'):
     """Display the plan details."""
 
     try:
@@ -333,88 +328,45 @@ def edit(request, plan_id):
     return render(request, 'testplans/mutable.html', context_data)
 
 
-@require_POST
-@permission_required('testplans.add_testplan')
-def clone(request):
-    """Clone testplan"""
+@method_decorator(permission_required('testplans.add_testplan'), name='dispatch')
+class Clone(View):
+    http_method_names = ['post']
+    template_name = 'testplans/clone.html'
 
-    if 'plan' not in request.POST:
-        messages.add_message(request,
-                             messages.ERROR,
-                             _('TestPlan is required'))
-        # redirect back where we came from
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    def post(self, request, *args, **kwargs):
+        if 'plan' not in request.POST:
+            messages.add_message(request,
+                                 messages.ERROR,
+                                 _('TestPlan is required'))
+            # redirect back where we came from
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-    plan_id = request.POST.get('plan')
-    test_plan = get_object_or_404(TestPlan, pk=int(plan_id))
+        plan_id = request.POST.get('plan', 0)
+        test_plan = get_object_or_404(TestPlan, pk=int(plan_id))
 
-    post_data = request.POST.copy()
-    if not request.POST.get('name'):
-        post_data['name'] = test_plan.make_cloned_name()
+        post_data = request.POST.copy()
+        if not request.POST.get('name'):
+            post_data['name'] = test_plan.make_cloned_name()
 
-    clone_form = ClonePlanForm(post_data)
-    clone_form.populate(product_id=request.POST.get('product_id'))
+        form = ClonePlanForm(post_data)
+        form.populate(product_pk=request.POST.get('product'))
 
-    # if required values are missing we are still going to show
-    # the form below, otherwise clone & redirect
-    if clone_form.is_valid():
-        clone_options = clone_form.cleaned_data
+        # if required values are missing we are still going to show
+        # the form below, otherwise clone & redirect
+        if form.is_valid():
+            form.cleaned_data['new_author'] = request.user
+            cloned_plan = test_plan.clone(**form.cleaned_data)
 
-        # Create new test plan.
-        new_name = clone_options['name']
+            return HttpResponseRedirect(
+                reverse('test_plan_url_short', args=[cloned_plan.pk]))
 
-        clone_params = dict(
-            # Cloned plan properties
-            new_name=new_name,
-            product=clone_options['product'],
-            version=clone_options['product_version'],
-            set_parent=clone_options['set_parent'],
+        # form wasn't valid
+        context_data = {
+            'test_plan': test_plan,
+            'form': form,
+        }
 
-            # Link or copy cases
-            link_cases=clone_options['link_testcases'],
-            copy_cases=clone_options['copy_testcases'],
-            default_component_initial_owner=request.user,
-        )
-
-        assign_me_as_plan_author = not clone_options['keep_orignal_author']
-        if assign_me_as_plan_author:
-            clone_params['new_original_author'] = request.user
-
-        assign_me_as_copied_case_author = \
-            clone_options['copy_testcases'] and \
-            not clone_options['maintain_case_orignal_author']
-        if assign_me_as_copied_case_author:
-            clone_params['new_case_author'] = request.user
-
-        # pylint: disable=invalid-name
-        assign_me_as_copied_case_default_tester = \
-            clone_options['copy_testcases'] and \
-            not clone_options['keep_case_default_tester']
-        if assign_me_as_copied_case_default_tester:
-            clone_params['new_case_default_tester'] = request.user
-
-        cloned_plan = test_plan.clone(**clone_params)
-
-        return HttpResponseRedirect(
-            reverse('test_plan_url_short', args=[cloned_plan.plan_id]))
-
-    # clone form wasn't valid
-    context_data = {
-        'test_plan': test_plan,
-        'clone_form': clone_form,
-    }
-    return render(request, 'plan/clone.html', context_data)
-
-
-def attachment(request, plan_id, template_name='plan/attachment.html'):
-    """Manage attached files"""
-
-    test_plan = get_object_or_404(TestPlan, plan_id=plan_id)
-    context_data = {
-        'test_plan': test_plan,
-        'limit': settings.FILE_UPLOAD_MAX_SIZE,
-    }
-    return render(request, template_name, context_data)
+        return render(request, self.template_name, context_data)
 
 
 class ReorderCasesView(View):
@@ -463,7 +415,7 @@ class UpdateParentView(View):
         return JsonResponse({'rc': 0, 'response': 'ok'})
 
 
-class LinkCasesView(View):
+class LinkCasesView(View):  # pylint: disable=missing-permission-required
     """Link cases to plan"""
 
     @method_decorator(permission_required('testcases.add_testcaseplan'))

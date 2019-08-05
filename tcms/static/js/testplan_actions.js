@@ -1,7 +1,6 @@
 Nitrate.TestPlans = {};
 Nitrate.TestPlans.Details = {};
 Nitrate.TestPlans.SearchCase = {};
-Nitrate.TestPlans.Clone = {};
 
 /*
  * Hold container IDs
@@ -252,13 +251,6 @@ Nitrate.TestPlans.TreeView = {
     previewPlan(parameters, '', callback);
   },
 };
-
-function configure_product_on_load() {
-    $('#id_product').change(function() {
-        $('#id_product_version').find('option').remove();
-        update_version_select_from_product($(this), '#id_product_version')
-    });
-}
 
 Nitrate.TestPlans.Details = {
   'tabContentContainerIds': {
@@ -632,35 +624,6 @@ Nitrate.TestPlans.SearchCase.on_load = function() {
   if (jQ("#id_checkbox_all_cases").length) {
     bindSelectAllCheckbox(jQ('#id_checkbox_all_cases')[0], jQ('#id_form_cases')[0], 'case');
   }
-};
-
-Nitrate.TestPlans.Clone.on_load = function() {
-    configure_product_on_load();
-    update_version_select_from_product($('#id_product'), '#id_product_version')
-
-  jQ('#id_link_testcases').bind('change', function(e) {
-    if (this.checked) {
-      this.parentNode.parentNode.className = 'choose';
-      jQ('#id_clone_case_zone')[0].style.display = 'block';
-    } else {
-      this.parentNode.parentNode.className = 'unchoose';
-      jQ('#id_clone_case_zone')[0].style.display = 'none';
-    }
-  });
-
-  jQ('#id_copy_testcases').bind('change', function(e) {
-    if (this.checked) {
-      jQ('#id_maintain_case_orignal_author')[0].disabled = false;
-      jQ('#id_keep_case_default_tester')[0].disabled = false;
-    } else {
-      jQ('#id_maintain_case_orignal_author')[0].disabled = true;
-      jQ('#id_keep_case_default_tester')[0].disabled = true;
-    }
-  });
-
-  jQ('.js-cancel-button').bind('click', function() {
-    window.history.back();
-  });
 };
 
 /*

@@ -84,6 +84,8 @@ Brief history
 * Dec 2018 - GitLab integration support - first big code contribution by
   non-team member; more than 5 different external contributors in 2018 alone
 * Feb 2019 - Celebrating 10th anniversary with Kiwi TCMS info booth at FOSDEM Brussels
+* Jun 2019 - `OpenAwards winner <http://kiwitcms.org/blog/atodorov/2019/06/24/kiwi-tcms-is-openawards-2019-best-tech-community-winner/>`_
+  in 'Best Tech Community' category
 
 
 Documentation
@@ -98,14 +100,16 @@ Installation
 See http://kiwitcms.readthedocs.io/en/latest/installing_docker.html
 
 
-Contribution
-------------
+Ways to help us continue improving Kiwi TCMS
+---------------------------------------------
 
-See http://kiwitcms.readthedocs.org/en/latest/contribution.html
-
-You are more than welcome to make a monthly donation and help us continue
-improving Kiwi TCMS.
-[`Become a sponsor <https://opencollective.com/kiwitcms#contributors>`_]
+- Click the `Star` button at https://github.com/kiwitcms/Kiwi/stargazers
+- Follow @KiwiTCMS at https://twitter.com/KiwiTCMS
+- Subscribe to our newsletter
+  `here <https://kiwitcms.us17.list-manage.com/subscribe/post?u=9b57a21155a3b7c655ae8f922&id=c970a37581>`_
+- Send us testimonials and feedback about how your team is using Kiwi TCMS
+- Donate 5$ at https://opencollective.com/kiwitcms
+- Become a `contributor <http://kiwitcms.readthedocs.org/en/latest/contribution.html>`_
 
 
 Support

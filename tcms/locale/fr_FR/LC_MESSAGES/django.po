@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiwitcms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-16 10:33+0000\n"
-"PO-Revision-Date: 2019-05-16 08:32\n"
+"POT-Creation-Date: 2019-07-25 07:44+0000\n"
+"PO-Revision-Date: 2019-07-25 14:31\n"
 "Last-Translator: Alexander Todorov (atodorov)\n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -16,7 +16,7 @@ msgstr ""
 "X-Crowdin-Language: fr\n"
 "X-Crowdin-File: /master/tcms/locale/en/LC_MESSAGES/django.po\n"
 
-#: tcms/core/ajax.py:158 tcms/testruns/views.py:696
+#: tcms/core/ajax.py:158 tcms/testruns/views.py:697
 #, python-format
 msgid "User %s not found!"
 msgstr "L'utilisateur %s non trouvé!"
@@ -26,10 +26,11 @@ msgid "Core customized comments"
 msgstr "Commentaires de noyau personnalisé"
 
 #: tcms/core/contrib/comments/forms.py:14
-#: tcms/templates/run/get_case_runs.html:138
+#: tcms/templates/run/get_case_runs.html:142
 #: tcms/testcases/templates/testcases/get.html:311
 #: tcms/testcases/templates/testcases/get.html:337
 #: tcms/testcases/templates/testcases/get.html:374
+#: tcms/testplans/templates/testplans/clone.html:13
 #: tcms/testplans/templates/testplans/mutable.html:23
 #: tcms/testplans/templates/testplans/search.html:11
 msgid "Name"
@@ -40,12 +41,12 @@ msgid "Email address"
 msgstr "Courriel"
 
 #: tcms/core/contrib/comments/forms.py:21
-#: tcms/templates/run/get_case_runs.html:142 tcms/templates/run/report.html:138
+#: tcms/templates/run/get_case_runs.html:146 tcms/templates/run/report.html:138
 msgid "URL"
 msgstr "URL"
 
 #: tcms/core/contrib/comments/forms.py:25
-#: tcms/templates/run/get_case_runs.html:50
+#: tcms/templates/run/get_case_runs.html:52
 msgid "Comment"
 msgstr "Commentaire"
 
@@ -72,48 +73,48 @@ msgstr "Mise à jour le %(history_date)s\n"
 msgid "Base URL is not configured! See <a href=\"%(doc_url)s\">documentation</a> and <a href=\"%(admin_url)s\">change it</a>"
 msgstr "L'URL de base n'est pas configurée! Voir <a href=\"%(doc_url)s\">la documentation</a> et<a href=\"%(admin_url)s\">Pour la changer</a>"
 
-#: tcms/kiwi_auth/admin.py:28
+#: tcms/kiwi_auth/admin.py:29
 msgid "This email address is already in use"
 msgstr "Cette adresse e-mail est déjà utilisée"
 
-#: tcms/kiwi_auth/admin.py:84
+#: tcms/kiwi_auth/admin.py:86
 msgid "Personal info"
 msgstr "Information personnelle"
 
-#: tcms/kiwi_auth/admin.py:85
+#: tcms/kiwi_auth/admin.py:87
 msgid "Permissions"
 msgstr "Droits"
 
-#: tcms/kiwi_auth/forms.py:33
+#: tcms/kiwi_auth/forms.py:35
 msgid "A user with that email already exists."
 msgstr "Un utilisateur avec cette adresse mail existe déjà."
 
-#: tcms/kiwi_auth/forms.py:61
+#: tcms/kiwi_auth/forms.py:63
 #, python-format
 msgid "Your new %s account confirmation"
 msgstr "Votre confirmation du nouveau compte %s"
 
-#: tcms/kiwi_auth/views.py:50
+#: tcms/kiwi_auth/views.py:54
 msgid "Your account has been created, please check your mailbox for confirmation"
 msgstr "Votre compte a été créé. Veuillez Vérifier votre boite de courriel pour le lien de confirmation"
 
-#: tcms/kiwi_auth/views.py:56
+#: tcms/kiwi_auth/views.py:60
 msgid "Your account has been created, but you need an administrator to activate it"
 msgstr "Votre compte a été créé, mais vous avez besoin d’un administrateur pour l’activer"
 
-#: tcms/kiwi_auth/views.py:61
+#: tcms/kiwi_auth/views.py:65
 msgid "Following is the administrator list"
 msgstr "Ci-dessous la liste des administrateurs"
 
-#: tcms/kiwi_auth/views.py:103
+#: tcms/kiwi_auth/views.py:107
 msgid "This activation key no longer exists in the database"
 msgstr "Cette clé d'activation n'existe plus dans la base de données"
 
-#: tcms/kiwi_auth/views.py:108
+#: tcms/kiwi_auth/views.py:112
 msgid "This activation key has expired"
 msgstr "Cette clé d'activation a expiré"
 
-#: tcms/kiwi_auth/views.py:120
+#: tcms/kiwi_auth/views.py:124
 msgid "Your account has been activated successfully"
 msgstr "Votre compte a été activé avec succès"
 
@@ -161,35 +162,43 @@ msgstr "En Test"
 msgid "Breakdown"
 msgstr "Panne"
 
-#: tcms/settings/common.py:121
+#: tcms/settings/common.py:108
+msgid "Status matrix"
+msgstr "Matrice d'état"
+
+#: tcms/settings/common.py:109
+msgid "Execution trends"
+msgstr "Tendances des exécutions"
+
+#: tcms/settings/common.py:123
 msgid "ADMIN"
 msgstr "ADMINISTRATEUR"
 
-#: tcms/settings/common.py:122
+#: tcms/settings/common.py:124
 msgid "Users and groups"
 msgstr "Utilisateurs et groupes"
 
-#: tcms/settings/common.py:124
+#: tcms/settings/common.py:126
 msgid "Everything else"
 msgstr "Tout le reste"
 
-#: tcms/settings/common.py:130
+#: tcms/settings/common.py:132
 msgid "Report an Issue"
 msgstr "Signaler un problème"
 
-#: tcms/settings/common.py:131
+#: tcms/settings/common.py:133
 msgid "Ask for help on StackOverflow"
 msgstr "Demander de l’aide sur StackOverflow"
 
-#: tcms/settings/common.py:132
+#: tcms/settings/common.py:134
 msgid "User Guide"
 msgstr "Guide de l'utilisateur"
 
-#: tcms/settings/common.py:133
+#: tcms/settings/common.py:135
 msgid "Administration Guide"
 msgstr "Guide de l'administrateur"
 
-#: tcms/settings/common.py:134
+#: tcms/settings/common.py:136
 msgid "API Help"
 msgstr "Aide sur l’API"
 
@@ -202,22 +211,25 @@ msgstr "Nouvel utilisateur en attente d’approbation"
 msgid "NEW: TestRun #%(pk)d - %(summary)s"
 msgstr "NOUVEAU: Essai #%(pk)d - %(summary)s"
 
-#: tcms/telemetry/api.py:59
+#: tcms/telemetry/api.py:60
 msgid "OTHER"
-msgstr ""
+msgstr "AUTRE"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:5
 msgid "Testing Breakdown"
-msgstr ""
+msgstr "Palier de test"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:14
-#: tcms/templates/case/clone.html:46 tcms/templates/dashboard.html:49
-#: tcms/templates/plan/get.html:62 tcms/templates/plan/preview.html:15
-#: tcms/templates/run/get.html:122 tcms/templates/run/report.html:35
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:14
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:13
+#: tcms/templates/dashboard.html:49 tcms/templates/plan/get.html:62
+#: tcms/templates/plan/preview.html:15 tcms/templates/run/get.html:122
+#: tcms/templates/run/report.html:35
 #: tcms/testcases/templates/testcases/get.html:59
 #: tcms/testcases/templates/testcases/get.html:314
 #: tcms/testcases/templates/testcases/mutable.html:37
 #: tcms/testcases/templates/testcases/search.html:41
+#: tcms/testplans/templates/testplans/clone.html:20
 #: tcms/testplans/templates/testplans/mutable.html:32
 #: tcms/testplans/templates/testplans/search.html:42
 #: tcms/testplans/templates/testplans/search.html:111
@@ -228,18 +240,24 @@ msgid "Product"
 msgstr "Produit"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:23
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:43
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:42
 #: tcms/templates/run/assign_case.html:32 tcms/templates/run/get.html:67
 #: tcms/templates/run/report.html:24
 msgid "Test Plan"
 msgstr "Plan de test"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:33
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:51
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:50
 #: tcms/testcases/templates/testcases/search.html:16
 #: tcms/testplans/templates/testplans/search.html:16
 msgid "After"
 msgstr "Après"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:45
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:63
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:62
 #: tcms/testcases/templates/testcases/search.html:27
 #: tcms/testplans/templates/testplans/search.html:28
 msgid "Before"
@@ -247,12 +265,12 @@ msgstr "Avant"
 
 #: tcms/telemetry/templates/telemetry/testing/breakdown.html:61
 msgid "Total"
-msgstr ""
+msgstr "Total"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:72
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:71
 #: tcms/templates/plan/get_cases.html:107
 #: tcms/templates/plan/get_cases.html:187
-#: tcms/templates/run/get_case_runs.html:76 tcms/templates/run/report.html:67
+#: tcms/templates/run/get_case_runs.html:80 tcms/templates/run/report.html:67
 #: tcms/templates/run/table_executions.html:20
 #: tcms/testcases/templates/testcases/get.html:93
 #: tcms/testcases/templates/testcases/mutable.html:92
@@ -261,18 +279,54 @@ msgstr ""
 msgid "Automated"
 msgstr "Automatiser"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:76
-#: tcms/templates/run/get_case_runs.html:79
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:75
+#: tcms/templates/run/get_case_runs.html:83
 msgid "Manual"
 msgstr "Manuelle"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:83
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:81
 msgid "Priorities"
-msgstr ""
+msgstr "Priorités"
 
-#: tcms/telemetry/templates/telemetry/testing/breakdown.html:88
+#: tcms/telemetry/templates/telemetry/testing/breakdown.html:86
 msgid "Categories"
-msgstr ""
+msgstr "Catégories"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:5
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:5
+msgid "Testing Status Matrix"
+msgstr "Matrice d'état des tests"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:23
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:22
+#: tcms/templates/plan/get.html:66 tcms/templates/plan/preview.html:19
+#: tcms/testplans/templates/testplans/clone.html:35
+#: tcms/testplans/templates/testplans/mutable.html:47
+#: tcms/testplans/templates/testplans/search.html:52
+#: tcms/testplans/templates/testplans/search.html:112
+#: tcms/testruns/templates/testruns/search.html:34
+#: tcms/testruns/templates/testruns/search.html:94
+msgid "Version"
+msgstr "Version"
+
+#: tcms/telemetry/templates/telemetry/testing/execution-trends.html:32
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:31
+#: tcms/templates/case/get_details_case_run.html:75
+#: tcms/templates/run/assign_case.html:24 tcms/templates/run/get.html:128
+#: tcms/templates/run/report.html:38
+#: tcms/testruns/templates/testruns/mutable.html:31
+#: tcms/testruns/templates/testruns/search.html:44
+#: tcms/testruns/templates/testruns/search.html:95
+msgid "Build"
+msgstr "Construction"
+
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:79
+msgid "Test case"
+msgstr "Scénario de test"
+
+#: tcms/telemetry/templates/telemetry/testing/status-matrix.html:79
+msgid "Test run"
+msgstr "Test exécuté"
 
 #: tcms/templates/404.html:5 tcms/templates/404.html:16
 msgid "Page not found"
@@ -290,149 +344,6 @@ msgstr "Êtes-vous sûr de vouloir supprimer cette pièce jointe ?"
 msgid "the leading open source test case management system"
 msgstr "le système de gestion de scénario de test leader en open source"
 
-#: tcms/templates/case/attachment.html:29
-#: tcms/templates/plan/attachment.html:30
-msgid "Note: Each attachment size limit is"
-msgstr "Note: Chaque limite de taille de pièce jointe est"
-
-#: tcms/templates/case/attachment.html:35
-#: tcms/templates/plan/attachment.html:36
-#: tcms/templates/plan/get_attachments.html:13
-msgid "File name"
-msgstr "Nom du fichier"
-
-#: tcms/templates/case/attachment.html:36
-#: tcms/templates/plan/attachment.html:37
-#: tcms/templates/plan/get_attachments.html:14
-msgid "Submitter"
-msgstr "Émetteur"
-
-#: tcms/templates/case/attachment.html:37
-#: tcms/templates/plan/attachment.html:38
-#: tcms/templates/plan/get_attachments.html:15
-msgid "Create date"
-msgstr "Date de création"
-
-#: tcms/templates/case/attachment.html:38
-#: tcms/templates/management/get_tag.html:10
-#: tcms/templates/plan/attachment.html:39
-#: tcms/templates/plan/get_attachments.html:16
-msgid "Action"
-msgstr "Action"
-
-#: tcms/templates/case/clone.html:24
-msgid "Clone TestCase(s)"
-msgstr "Cloner le(s) scénario(s) de test(s)"
-
-#: tcms/templates/case/clone.html:28
-msgid "Select Plan"
-msgstr "Choisissez un plan"
-
-#: tcms/templates/case/clone.html:32
-msgid "Use the same Plan"
-msgstr "Utiliser le même plan"
-
-#: tcms/templates/case/clone.html:37
-msgid "Filter another plan"
-msgstr "Filtrer un autre plan"
-
-#: tcms/templates/case/clone.html:42 tcms/templates/plan/get_cases.html:161
-#: tcms/templates/plan/search_case.html:80
-#: tcms/templates/run/assign_case.html:71
-#: tcms/testcases/templates/testcases/get.html:310
-#: tcms/testcases/templates/testcases/search.html:132
-#: tcms/testplans/templates/testplans/search.html:108
-#: tcms/testruns/templates/testruns/search.html:90
-msgid "ID"
-msgstr "ID"
-
-#: tcms/templates/case/clone.html:50 tcms/templates/plan/clone.html:37
-#: tcms/templates/run/get.html:73 tcms/templates/run/report.html:27
-msgid "Product Version"
-msgstr "Version du produit"
-
-#: tcms/templates/case/clone.html:54
-#: tcms/templates/case/clone_select_plan.html:9 tcms/templates/plan/get.html:70
-#: tcms/templates/plan/preview.html:23
-msgid "Plan Type"
-msgstr "Type de plan"
-
-#: tcms/templates/case/clone.html:58
-msgid "Plan Author"
-msgstr "Auteur du plan"
-
-#: tcms/templates/case/clone.html:62 tcms/templates/case/get_details.html:32
-#: tcms/templates/management/get_tag.html:6
-#: tcms/templates/plan/get_cases.html:127
-#: tcms/templates/run/get_case_runs.html:109
-#: tcms/testcases/templates/testcases/search.html:111
-#: tcms/testplans/templates/testplans/search.html:87
-#: tcms/testruns/templates/testruns/search.html:74
-msgid "Tag"
-msgstr "Étiquette"
-
-#: tcms/templates/case/clone.html:66
-#: tcms/templates/case/clone_select_plan.html:8
-msgid "Plan Summary"
-msgstr "Sommaire du plan"
-
-#: tcms/templates/case/clone.html:70
-#: tcms/testplans/templates/testplans/mutable.html:139
-#: tcms/testplans/templates/testplans/search.html:93
-msgid "Active"
-msgstr "Actif"
-
-#: tcms/templates/case/clone.html:93
-msgid "Case(s)"
-msgstr "Scénario(s)"
-
-#: tcms/templates/case/clone.html:97
-msgid "Clone Settings"
-msgstr "Paramètres du clone"
-
-#: tcms/templates/case/clone.html:99
-msgid "Case Properties"
-msgstr "Propriété du cas"
-
-#: tcms/templates/case/clone_select_plan.html:2
-msgid "Plan"
-msgstr "Plan"
-
-#: tcms/templates/case/clone_select_plan.html:10
-#: tcms/templates/plan/get.html:58 tcms/templates/plan/get_cases.html:95
-#: tcms/templates/plan/get_cases.html:171 tcms/templates/plan/preview.html:11
-#: tcms/templates/plan/search_case.html:82
-#: tcms/templates/run/assign_case.html:73
-#: tcms/testcases/templates/testcases/get.html:43
-#: tcms/testcases/templates/testcases/get.html:312
-#: tcms/testcases/templates/testcases/mutable.html:147
-#: tcms/testcases/templates/testcases/search.html:106
-#: tcms/testcases/templates/testcases/search.html:140
-#: tcms/testplans/templates/testplans/mutable.html:103
-#: tcms/testplans/templates/testplans/search.html:74
-#: tcms/testplans/templates/testplans/search.html:114
-#: tcms/testruns/templates/testruns/mutable.html:93
-msgid "Author"
-msgstr "Auteur"
-
-#: tcms/templates/case/clone_select_plan.html:11
-msgid "Is Active"
-msgstr "Est actif"
-
-#: tcms/templates/case/clone_select_plan.html:19
-#: tcms/testcases/templates/testcases/search.html:94
-msgid "Yes"
-msgstr "Oui"
-
-#: tcms/templates/case/clone_select_plan.html:19
-#: tcms/testcases/templates/testcases/search.html:97
-msgid "No"
-msgstr "Non"
-
-#: tcms/templates/case/clone_select_plan.html:22
-msgid "There are no plans"
-msgstr "Il n'y a pas de plans"
-
 #: tcms/templates/case/get_details.html:8
 #: tcms/testcases/templates/testcases/mutable.html:100
 msgid "Text"
@@ -443,12 +354,12 @@ msgid "Attachment"
 msgstr "Pièce jointe"
 
 #: tcms/templates/case/get_details.html:21
-#: tcms/templates/case/get_details_case_run.html:159
+#: tcms/templates/case/get_details_case_run.html:154
 msgid "No attachment found"
 msgstr "Pas de pièce jointe trouvée"
 
 #: tcms/templates/case/get_details.html:24
-#: tcms/templates/case/get_details_case_run.html:165
+#: tcms/templates/case/get_details_case_run.html:164
 #: tcms/templates/plan/get_cases.html:123
 #: tcms/testcases/templates/testcases/search.html:61
 #: tcms/testcases/templates/testcases/search.html:136
@@ -456,12 +367,22 @@ msgid "Component"
 msgstr "Composant"
 
 #: tcms/templates/case/get_details.html:29
-#: tcms/templates/case/get_details_case_run.html:170
+#: tcms/templates/case/get_details_case_run.html:169
 msgid "No component found"
 msgstr "Pas de composant trouvé"
 
+#: tcms/templates/case/get_details.html:32
+#: tcms/templates/management/get_tag.html:6
+#: tcms/templates/plan/get_cases.html:127
+#: tcms/templates/run/get_case_runs.html:113
+#: tcms/testcases/templates/testcases/search.html:111
+#: tcms/testplans/templates/testplans/search.html:87
+#: tcms/testruns/templates/testruns/search.html:74
+msgid "Tag"
+msgstr "Étiquette"
+
 #: tcms/templates/case/get_details.html:37
-#: tcms/templates/case/get_details_case_run.html:181
+#: tcms/templates/case/get_details_case_run.html:180
 #: tcms/templates/management/get_tag.html:28
 msgid "No tag found"
 msgstr "Pas d'étiquette trouvée"
@@ -489,7 +410,7 @@ msgid "Notes"
 msgstr "Remarques"
 
 #: tcms/templates/case/get_details.html:64
-#: tcms/templates/run/get_case_runs.html:191
+#: tcms/templates/run/get_case_runs.html:195
 #: tcms/templates/run/table_executions.html:25
 msgid "Comments"
 msgstr "Commentaires"
@@ -508,15 +429,6 @@ msgid "Run Date"
 msgstr "Date d'exécution"
 
 #: tcms/templates/case/get_details_case_run.html:75
-#: tcms/templates/run/assign_case.html:24 tcms/templates/run/get.html:128
-#: tcms/templates/run/report.html:38
-#: tcms/testruns/templates/testruns/mutable.html:31
-#: tcms/testruns/templates/testruns/search.html:44
-#: tcms/testruns/templates/testruns/search.html:95
-msgid "Build"
-msgstr "Construction"
-
-#: tcms/templates/case/get_details_case_run.html:75
 msgid "Text Version"
 msgstr "Version texte"
 
@@ -526,11 +438,11 @@ msgid "Report"
 msgstr "Rapport"
 
 #: tcms/templates/case/get_details_case_run.html:82
-#: tcms/templates/case/get_details_case_run.html:192
+#: tcms/templates/case/get_details_case_run.html:191
 #: tcms/templates/management/get_tag.html:37
 #: tcms/templates/run/get_case_runs.html:21
-#: tcms/templates/run/get_case_runs.html:45
-#: tcms/templates/run/get_case_runs.html:52
+#: tcms/templates/run/get_case_runs.html:47
+#: tcms/templates/run/get_case_runs.html:55
 #: tcms/testcases/templates/testcases/get.html:351
 #: tcms/testcases/templates/testcases/get.html:388
 msgid "Add"
@@ -544,7 +456,7 @@ msgstr "A partir d'un scénario"
 msgid "No log recorded"
 msgstr "Aucun journal enregistré"
 
-#: tcms/templates/case/get_details_case_run.html:192
+#: tcms/templates/case/get_details_case_run.html:191
 msgid "Test Link"
 msgstr "Lien du test"
 
@@ -702,11 +614,16 @@ msgstr "Scénarios"
 msgid "Runs"
 msgstr "Exécutions"
 
+#: tcms/templates/management/get_tag.html:10
+#: tcms/templates/plan/get_attachments.html:10
+msgid "Action"
+msgstr "Action"
+
 #: tcms/templates/management/get_tag.html:21
 #: tcms/templates/management/get_tag.html:23
 #: tcms/templates/plan/get_cases.html:32 tcms/templates/plan/get_cases.html:34
 #: tcms/templates/run/get_case_runs.html:24
-#: tcms/templates/run/get_case_runs.html:46
+#: tcms/templates/run/get_case_runs.html:48
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -780,30 +697,6 @@ msgstr "Modifier"
 msgid "No test case was found in this plan."
 msgstr "Aucun scénario de test a été trouvé dans ce plan."
 
-#: tcms/templates/plan/clone.html:4 tcms/templates/plan/get.html:47
-msgid "Clone Plan"
-msgstr "Dupliquer un plan"
-
-#: tcms/templates/plan/clone.html:23
-msgid "Clone TestPlan"
-msgstr "Dupliquer un plan de test"
-
-#: tcms/templates/plan/clone.html:29
-msgid "New Plan Name"
-msgstr "Nouveau nom de plan"
-
-#: tcms/templates/plan/clone.html:33
-msgid "Copy to Product"
-msgstr "Copier vers le produit"
-
-#: tcms/templates/plan/clone.html:44
-msgid "Copy Settings"
-msgstr "Copier les paramètres"
-
-#: tcms/templates/plan/clone.html:51
-msgid "Copy"
-msgstr "Copier"
-
 #: tcms/templates/plan/get.html:46
 msgid "Edit Plan"
 msgstr "Modifier le plan"
@@ -811,6 +704,10 @@ msgstr "Modifier le plan"
 #: tcms/templates/plan/get.html:46
 msgid "Edit test plan"
 msgstr "Modifier le plan de test"
+
+#: tcms/templates/plan/get.html:47
+msgid "Clone Plan"
+msgstr "Dupliquer un plan"
 
 #: tcms/templates/plan/get.html:47
 msgid "Clone this plan to other product"
@@ -828,14 +725,25 @@ msgstr "Supprimer le plan"
 msgid "Delete test plan"
 msgstr "Supprimer le plan de test"
 
-#: tcms/templates/plan/get.html:66 tcms/templates/plan/preview.html:19
-#: tcms/testplans/templates/testplans/mutable.html:47
-#: tcms/testplans/templates/testplans/search.html:52
-#: tcms/testplans/templates/testplans/search.html:112
-#: tcms/testruns/templates/testruns/search.html:34
-#: tcms/testruns/templates/testruns/search.html:94
-msgid "Version"
-msgstr "Version"
+#: tcms/templates/plan/get.html:58 tcms/templates/plan/get_cases.html:95
+#: tcms/templates/plan/get_cases.html:171 tcms/templates/plan/preview.html:11
+#: tcms/templates/plan/search_case.html:82
+#: tcms/templates/run/assign_case.html:73
+#: tcms/testcases/templates/testcases/get.html:43
+#: tcms/testcases/templates/testcases/get.html:312
+#: tcms/testcases/templates/testcases/mutable.html:147
+#: tcms/testcases/templates/testcases/search.html:106
+#: tcms/testcases/templates/testcases/search.html:140
+#: tcms/testplans/templates/testplans/mutable.html:103
+#: tcms/testplans/templates/testplans/search.html:74
+#: tcms/testplans/templates/testplans/search.html:114
+#: tcms/testruns/templates/testruns/mutable.html:93
+msgid "Author"
+msgstr "Auteur"
+
+#: tcms/templates/plan/get.html:70 tcms/templates/plan/preview.html:23
+msgid "Plan Type"
+msgstr "Type de plan"
 
 #: tcms/templates/plan/get.html:76 tcms/templates/plan/preview.html:31
 msgid "Reference Link"
@@ -874,7 +782,7 @@ msgid "Attachments"
 msgstr "Pièces jointes"
 
 #: tcms/templates/plan/get.html:125 tcms/templates/plan/get_cases.html:76
-#: tcms/templates/run/get.html:91 tcms/templates/run/get_case_runs.html:122
+#: tcms/templates/run/get.html:91 tcms/templates/run/get_case_runs.html:126
 #: tcms/testcases/templates/testcases/get.html:330
 #: tcms/testcases/templates/testcases/search.html:141
 #: tcms/testplans/templates/testplans/search.html:115
@@ -890,11 +798,19 @@ msgstr "Vue arborescente"
 msgid "The document for this plan hasn't been written yet."
 msgstr "Le document pour ce plan n’a pas encore été écrit."
 
-#: tcms/templates/plan/get_attachments.html:6
-msgid "Add attachment"
-msgstr "Ajoute une pièce jointe"
+#: tcms/templates/plan/get_attachments.html:7
+msgid "File name"
+msgstr "Nom du fichier"
 
-#: tcms/templates/plan/get_attachments.html:29
+#: tcms/templates/plan/get_attachments.html:8
+msgid "Submitter"
+msgstr "Émetteur"
+
+#: tcms/templates/plan/get_attachments.html:9
+msgid "Create date"
+msgstr "Date de création"
+
+#: tcms/templates/plan/get_attachments.html:23
 msgid "No attachments"
 msgstr "Pas de pièces jointes"
 
@@ -921,7 +837,8 @@ msgid "print view of selected cases"
 msgstr "afficher la vue des scénarios sélectionnés"
 
 #: tcms/templates/plan/get_cases.html:27 tcms/templates/plan/get_cases.html:29
-#: tcms/testcases/views.py:578
+#: tcms/testcases/templates/testcases/clone.html:40 tcms/testcases/views.py:578
+#: tcms/testplans/templates/testplans/clone.html:68
 msgid "Clone"
 msgstr "Dupliquer"
 
@@ -953,7 +870,7 @@ msgstr "Modifier l'examinateur par défaut"
 #: tcms/templates/plan/get_cases.html:192
 #: tcms/templates/plan/search_case.html:86 tcms/templates/run/get.html:144
 #: tcms/templates/run/get_case_runs.html:35
-#: tcms/templates/run/get_case_runs.html:91 tcms/templates/run/report.html:70
+#: tcms/templates/run/get_case_runs.html:95 tcms/templates/run/report.html:70
 #: tcms/templates/run/table_executions.html:24
 #: tcms/testcases/templates/testcases/get.html:74
 #: tcms/testcases/templates/testcases/mutable.html:68
@@ -967,7 +884,7 @@ msgstr "Statut"
 #: tcms/templates/plan/get_cases.html:202
 #: tcms/templates/plan/search_case.html:84
 #: tcms/templates/run/assign_case.html:76
-#: tcms/templates/run/get_case_runs.html:100
+#: tcms/templates/run/get_case_runs.html:104
 #: tcms/templates/run/table_executions.html:22
 #: tcms/testcases/templates/testcases/get.html:79
 #: tcms/testcases/templates/testcases/mutable.html:80
@@ -995,7 +912,7 @@ msgid "Re-order cases"
 msgstr "Ré-ordonner les scénarios"
 
 #: tcms/templates/plan/get_cases.html:81
-#: tcms/templates/run/get_case_runs.html:127
+#: tcms/templates/run/get_case_runs.html:131
 msgid "No tags in cases"
 msgstr "Pas d'étiquettes pour ces scénarios"
 
@@ -1023,6 +940,16 @@ msgstr "Eléments par page"
 #: tcms/templates/plan/get_cases.html:146
 msgid "Also select all cases that are not yet shown below."
 msgstr "Également sélectionner tous les scénarios qui ne sont pas encore indiqués ci-dessous."
+
+#: tcms/templates/plan/get_cases.html:161
+#: tcms/templates/plan/search_case.html:80
+#: tcms/templates/run/assign_case.html:71
+#: tcms/testcases/templates/testcases/get.html:310
+#: tcms/testcases/templates/testcases/search.html:132
+#: tcms/testplans/templates/testplans/search.html:108
+#: tcms/testruns/templates/testruns/search.html:90
+msgid "ID"
+msgstr "ID"
 
 #: tcms/templates/plan/get_cases.html:166
 #: tcms/templates/run/assign_case.html:72
@@ -1084,7 +1011,7 @@ msgid "Normal Search"
 msgstr "Recherche normale"
 
 #: tcms/templates/plan/search_case.html:81
-#: tcms/templates/run/get_case_runs.html:64 tcms/templates/run/report.html:66
+#: tcms/templates/run/get_case_runs.html:68 tcms/templates/run/report.html:66
 #: tcms/templates/run/table_executions.html:17
 #: tcms/testcases/templates/testcases/mutable.html:18
 #: tcms/testcases/templates/testcases/search.html:11
@@ -1162,7 +1089,7 @@ msgstr "maintenant"
 
 #: tcms/templates/registration/password_reset_confirm.html:22
 #: tcms/templates/registration/registration_form.html:31
-#: tcms/templates/run/get_case_runs.html:194
+#: tcms/templates/run/get_case_runs.html:198
 msgid "Confirm"
 msgstr "Confirmer"
 
@@ -1243,6 +1170,10 @@ msgstr "Date de création"
 msgid "Selected"
 msgstr "Sélectionnés"
 
+#: tcms/templates/run/get.html:73 tcms/templates/run/report.html:27
+msgid "Product Version"
+msgstr "Version du produit"
+
 #: tcms/templates/run/get.html:115 tcms/templates/run/report.html:51
 msgid "Note"
 msgstr "Note"
@@ -1274,11 +1205,11 @@ msgstr "Mettez en surbrillance"
 
 #: tcms/templates/run/get_case_runs.html:24
 msgid "Remove selected cases form this test run"
-msgstr ""
+msgstr "Supprimer les scénarios sélectionnées de cet essai"
 
 #: tcms/templates/run/get_case_runs.html:27
 msgid "Update the IDLE case runs to newest case text"
-msgstr ""
+msgstr "Mettre à jour le cas en attente pour qu'il s'exécute vers la nouvelle zone de texte"
 
 #: tcms/templates/run/get_case_runs.html:27
 msgid "Update"
@@ -1286,22 +1217,22 @@ msgstr "Mise à jour"
 
 #: tcms/templates/run/get_case_runs.html:30
 msgid "Assign this case(s) to other people"
-msgstr ""
+msgstr "Assigner ce(s) cas(s) à d'autres personnes"
 
 #: tcms/templates/run/get_case_runs.html:30
-#: tcms/templates/run/get_case_runs.html:72
+#: tcms/templates/run/get_case_runs.html:76
 #: tcms/templates/run/table_executions.html:19
 msgid "Assignee"
 msgstr "Affecté à"
 
-#: tcms/templates/run/get_case_runs.html:43
+#: tcms/templates/run/get_case_runs.html:45
 #: tcms/templates/run/status_statistics.html:27
 #: tcms/templates/run/table_executions.html:23
 #: tcms/testcases/templates/testcases/get.html:284
 msgid "Bugs"
 msgstr "Anomalies"
 
-#: tcms/templates/run/get_case_runs.html:68
+#: tcms/templates/run/get_case_runs.html:72
 #: tcms/testcases/templates/testcases/get.html:48
 #: tcms/testcases/templates/testcases/mutable.html:30
 #: tcms/testcases/templates/testcases/mutable.html:170
@@ -1313,37 +1244,37 @@ msgstr "Anomalies"
 msgid "Default tester"
 msgstr "Testeur par défaut"
 
-#: tcms/templates/run/get_case_runs.html:80
+#: tcms/templates/run/get_case_runs.html:84
 msgid "Auto"
 msgstr "Automatique"
 
-#: tcms/templates/run/get_case_runs.html:86
+#: tcms/templates/run/get_case_runs.html:90
 msgid "Bug"
 msgstr "Anomalie"
 
-#: tcms/templates/run/get_case_runs.html:88
+#: tcms/templates/run/get_case_runs.html:92
 msgid "You can type multiple bugs by comma."
 msgstr "Vous pouvez saisir plusieurs anomalies séparé par une virgule."
 
-#: tcms/templates/run/get_case_runs.html:135
+#: tcms/templates/run/get_case_runs.html:139
 msgid "All these fields are required."
 msgstr "Tous les champs sont obligatoires."
 
-#: tcms/templates/run/get_case_runs.html:138
+#: tcms/templates/run/get_case_runs.html:142
 msgid "64 characters at most"
 msgstr "64 caractères au maximum"
 
-#: tcms/templates/run/get_case_runs.html:169 tcms/templates/run/report.html:120
+#: tcms/templates/run/get_case_runs.html:173 tcms/templates/run/report.html:120
 #: tcms/testcases/templates/testcases/search.html:117
 #: tcms/testcases/templates/testcases/search.html:119
 msgid "Bug ID"
 msgstr "ID de l'anomalie"
 
-#: tcms/templates/run/get_case_runs.html:176
+#: tcms/templates/run/get_case_runs.html:180
 msgid "Check to add Test Case(s) to Issue Tracker"
 msgstr "Cocher pour ajouter des scénarios de test(s) au gestionnaire d'anomalie"
 
-#: tcms/templates/run/get_case_runs.html:195
+#: tcms/templates/run/get_case_runs.html:199
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -1467,6 +1398,18 @@ msgstr "**Scenario**: ... what behavior will be tested ...\n"
 msgid "DELETED: TestCase #%(pk)d - %(summary)s"
 msgstr "SUPPRESSION: Scénario de test #%(pk)d - %(summary)s"
 
+#: tcms/testcases/templates/testcases/clone.html:5
+msgid "Clone TestCase"
+msgstr "Dupliquer le scénario de test"
+
+#: tcms/testcases/templates/testcases/clone.html:12
+msgid "Add new TC into TP"
+msgstr "Ajouter un nouveau CT dans PT"
+
+#: tcms/testcases/templates/testcases/clone.html:27
+msgid "Selected TC"
+msgstr "Sélectionner CT"
+
 #: tcms/testcases/templates/testcases/get.html:98
 #: tcms/testcases/templates/testcases/mutable.html:107
 msgid "Script"
@@ -1521,6 +1464,7 @@ msgid "New TestCase"
 msgstr "Nouveau Cas de test"
 
 #: tcms/testcases/templates/testcases/mutable.html:38
+#: tcms/testplans/templates/testplans/clone.html:21
 #: tcms/testplans/templates/testplans/mutable.html:33
 msgid "add new Product"
 msgstr "Ajouter un nouveau produit"
@@ -1579,6 +1523,14 @@ msgstr "Rechercher des cas de tests"
 msgid "Test case summary"
 msgstr "Résumé des scénarios de test"
 
+#: tcms/testcases/templates/testcases/search.html:94
+msgid "Yes"
+msgstr "Oui"
+
+#: tcms/testcases/templates/testcases/search.html:97
+msgid "No"
+msgstr "Non"
+
 #: tcms/testcases/templates/testcases/search.html:100
 msgid "Both"
 msgstr "Les deux"
@@ -1614,14 +1566,39 @@ msgstr "Historique"
 msgid "Delete"
 msgstr "Supprimer"
 
-#: tcms/testcases/views.py:760 tcms/testruns/views.py:429
-#: tcms/testruns/views.py:507
+#: tcms/testcases/views.py:760 tcms/testruns/views.py:430
+#: tcms/testruns/views.py:508
 msgid "At least one TestCase is required"
 msgstr "Au moins un scénario de test est requis"
 
-#: tcms/testcases/views.py:897
+#: tcms/testcases/views.py:849
 msgid "TestCase cloning was successful"
 msgstr "Le clonage du cas de test a été réalisé avec succès"
+
+#: tcms/testplans/templates/testplans/clone.html:5
+msgid "Clone TestPlan"
+msgstr "Dupliquer un plan de test"
+
+#: tcms/testplans/templates/testplans/clone.html:37
+#: tcms/testplans/templates/testplans/mutable.html:49
+msgid "add new Version"
+msgstr "Ajouter une nouvelle version"
+
+#: tcms/testplans/templates/testplans/clone.html:54
+msgid "Clone TCs"
+msgstr "Dupliquer les CTs"
+
+#: tcms/testplans/templates/testplans/clone.html:57
+msgid "Clone or link existing TCs into new TP"
+msgstr "Dupliquer ou lier les CT existant dans ce nouveau PT"
+
+#: tcms/testplans/templates/testplans/clone.html:61
+msgid "Parent TP"
+msgstr "PT parent"
+
+#: tcms/testplans/templates/testplans/clone.html:64
+msgid "Set the source TP as parent of new TP"
+msgstr "Mettre ce PT comme parent du nouveau PT"
 
 #: tcms/testplans/templates/testplans/mutable.html:10
 msgid "Edit TestPlan"
@@ -1630,10 +1607,6 @@ msgstr "Modifier le plan de test"
 #: tcms/testplans/templates/testplans/mutable.html:12
 msgid "Create new TestPlan"
 msgstr "Créer un nouveau plan de test"
-
-#: tcms/testplans/templates/testplans/mutable.html:49
-msgid "add new Version"
-msgstr "Ajouter une nouvelle version"
 
 #: tcms/testplans/templates/testplans/mutable.html:80
 msgid "Parent ID"
@@ -1663,6 +1636,11 @@ msgstr "Le TestPlan a été mis à jour"
 msgid "Test cases are updated"
 msgstr "Les scénarios de test ont été mis à jour"
 
+#: tcms/testplans/templates/testplans/mutable.html:139
+#: tcms/testplans/templates/testplans/search.html:93
+msgid "Active"
+msgstr "Actif"
+
 #: tcms/testplans/templates/testplans/search.html:5
 msgid "Search test plans"
 msgstr "Rechercher des plan de test"
@@ -1676,15 +1654,15 @@ msgstr "Nom du plan de test"
 msgid "Test plan"
 msgstr "Plan de test"
 
-#: tcms/testplans/views.py:344
+#: tcms/testplans/views.py:340
 msgid "TestPlan is required"
 msgstr "Le plan de test est requis"
 
-#: tcms/testplans/views.py:565
+#: tcms/testplans/views.py:517
 msgid "At least one test plan is required for print"
 msgstr "Au moins un plan de test est requis pur l'impression"
 
-#: tcms/testplans/views.py:573
+#: tcms/testplans/views.py:525
 #, python-format
 msgid "Test Plan \"%s\" does not exist"
 msgstr "Le plan de test \"%s\" n'existe pas"
@@ -1762,15 +1740,15 @@ msgstr "Créé un essai de test requiert un plan de test, veuillez en sélection
 msgid "Creating a TestRun requires at least one TestCase"
 msgstr "Créé un scénario de test requiert au moins un cas de test"
 
-#: tcms/testruns/views.py:433
+#: tcms/testruns/views.py:434
 msgid "Clone of "
 msgstr "Clone de "
 
-#: tcms/testruns/views.py:516
+#: tcms/testruns/views.py:517
 msgid "TestCase ID is not a valid integer"
 msgstr "ID du scénario de test n'est plus un entier valide"
 
-#: tcms/testruns/views.py:644
+#: tcms/testruns/views.py:645
 #, python-format
 msgid "%d CaseRun(s) updated:"
 msgstr "Exécution du scénario %d mis à jour:"
@@ -1835,3 +1813,4 @@ msgstr "ERREUR"
 #: vinaigrette-deleteme.py:13
 msgid "WAIVED"
 msgstr "RENONCÉ À"
+
