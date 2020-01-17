@@ -1,99 +1,89 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=missing-permission-required
 
-from datetime import datetime
-
-from django.urls import reverse
 from django.conf import settings
 from django.contrib import messages
-from django.shortcuts import render
-from django.contrib.auth import views
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, views
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
-from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.http import require_http_methods
+from django.views.generic.base import View
 
-from tcms.signals import USER_REGISTERED_SIGNAL
 from tcms.kiwi_auth import forms
 from tcms.kiwi_auth.models import UserActivationKey
-
+from tcms.signals import USER_REGISTERED_SIGNAL
+from tcms.kiwi_auth.forms import RegistrationForm
 
 User = get_user_model()  # pylint: disable=invalid-name
 
 
-class LoginViewWithCustomTemplate(views.LoginView):  # pylint: disable=missing-permission-required
+class LoginViewWithCustomTemplate(views.LoginView):
     def get_template_names(self):
         return ['registration/custom_login.html', 'registration/login.html']
 
 
-class PasswordResetView(views.PasswordResetView):  # pylint: disable=missing-permission-required
+class PasswordResetView(views.PasswordResetView):
     form_class = forms.PasswordResetForm
 
 
-@require_http_methods(['GET', 'POST'])
-def register(request):
+class Register(View):
     """Register method of account"""
-    if request.method == 'POST':
-        form = forms.RegistrationForm(data=request.POST, files=request.FILES)
-        if form.is_valid():
-            new_user = form.save()
-            activation_key = form.set_activation_key()
-            # send a signal that new user has been registered
-            USER_REGISTERED_SIGNAL.send(sender=form.__class__,
-                                        request=request,
-                                        user=new_user)
+    template_name = 'registration/registration_form.html'
+    form_class = RegistrationForm
+    success_url = reverse_lazy('core-views-index')
 
-            # Send confirmation email to new user
-            if settings.DEFAULT_FROM_EMAIL and settings.AUTO_APPROVE_NEW_USERS:
-                form.send_confirm_mail(request, activation_key)
+    def post(self, request):
+        """ Post request handler. """
+        form = self.form_class(data=request.POST, files=request.FILES)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
 
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    _('Your account has been created, please check your mailbox for confirmation')
-                )
-            else:
-                messages.add_message(
-                    request,
-                    messages.WARNING,
-                    _('Your account has been created, but you need an administrator to activate it')
-                )
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    _('Following is the administrator list')
-                )
+        new_user = form.save()
+        activation_key = form.set_activation_key()
+        # send a signal that new user has been registered
+        USER_REGISTERED_SIGNAL.send(sender=form.__class__, request=request, user=new_user)
 
-                # super-users can approve others
-                for user in User.objects.filter(is_superuser=True):
-                    messages.add_message(
-                        request,
-                        messages.INFO,
-                        '<a href="mailto:{}">{}</a>'.format(user.email,
-                                                            user.get_full_name() or user.username)
-                    )
+        # Send confirmation email to new user
+        if settings.DEFAULT_FROM_EMAIL and settings.AUTO_APPROVE_NEW_USERS:
+            form.send_confirm_mail(request, activation_key)
 
-                # site admins should be able to do so too
-                for name, email in settings.ADMINS:
-                    messages.add_message(
-                        request,
-                        messages.WARNING,
-                        '<a href="mailto:{}">{}</a>'.format(email, name)
-                    )
+            msg = _('Your account has been created, please check your mailbox for confirmation')
+            messages.add_message(request, messages.SUCCESS, msg)
+        else:
+            msg = _('Your account has been created, but you need an administrator to activate it')
+            messages.add_message(request, messages.WARNING, msg)
 
-            return HttpResponseRedirect(reverse('core-views-index'))
-    else:
-        form = forms.RegistrationForm()
+            messages.add_message(request, messages.INFO, _('Following is the administrator list'))
+            self.show_messages_with_site_admins_emails_as_links(request)
+            self.show_messages_with_super_user_emails_as_links(request)
 
-    context_data = {
-        'form': form,
-    }
-    return render(request, 'registration/registration_form.html', context_data)
+        return HttpResponseRedirect(self.success_url)
+
+    @staticmethod
+    def show_messages_with_site_admins_emails_as_links(request):
+        """ Show messages with site admins emails as links. """
+        for name, email in settings.ADMINS:
+            mailto = '<a href="mailto:{}">{}</a>'.format(email, name)
+            messages.add_message(request, messages.WARNING, mailto)
+
+    @staticmethod
+    def show_messages_with_super_user_emails_as_links(request):
+        """ Show messages with super users emails as links. """
+        for user in User.objects.filter(is_superuser=True):
+            email_display_name = user.get_full_name() or user.username
+            mailto = '<a href="mailto:{}">{}</a>'.format(user.email, email_display_name)
+            messages.add_message(request, messages.INFO, mailto)
+
+    def get(self, request):
+        """ Get request handler. """
+        return render(request, self.template_name, {'form': self.form_class()})
 
 
 @require_GET
-def confirm(request, activation_key):  # pylint: disable=missing-permission-required
+def confirm(request, activation_key):
     """Confirm the user registration"""
 
     # Get the object
@@ -108,7 +98,7 @@ def confirm(request, activation_key):  # pylint: disable=missing-permission-requ
         )
         return HttpResponseRedirect(request.GET.get('next', reverse('core-views-index')))
 
-    if _activation_key.key_expires <= datetime.now():
+    if _activation_key.key_expires <= timezone.now():
         messages.add_message(request, messages.ERROR, _('This activation key has expired'))
         return HttpResponseRedirect(request.GET.get('next', reverse('core-views-index')))
 
@@ -126,7 +116,7 @@ def confirm(request, activation_key):  # pylint: disable=missing-permission-requ
     return HttpResponseRedirect(request.GET.get('next', reverse('core-views-index')))
 
 
-def profile(request, username):  # pylint: disable=missing-permission-required
+def profile(request, username):
     """Show user profiles"""
     user = get_object_or_404(User, username=username)
     return HttpResponseRedirect(reverse('admin:auth_user_change', args=[user.pk]))

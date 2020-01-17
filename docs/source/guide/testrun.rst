@@ -4,8 +4,9 @@ Test Runs
 =========
 
 This chapter explains how to create, search, edit, execute, and generate
-reports for Test Runs in Kiwi TCMS. A Test Run in Kiwi TCMS contains the execution results
-of selected test cases against particular product builds and environment.
+reports for Test Runs in Kiwi TCMS. A Test Run in Kiwi TCMS contains the
+execution results of selected test cases against particular product builds
+and environment.
 
 To view Test Runs you have created or are assigned to you click **Main menu::DASHBOARD**
 or alternatively click **Personal menu::My Test Runs**.
@@ -57,7 +58,8 @@ assigned to any user in Kiwi TCMS. To create a Test Run:
    |The Create New Test Run screen|
 
 #. Test Cases will be shown under the above screen.
-#. Click **Remove** action on any Test Cases that are not required for this Test Run.
+#. Click **Remove** action on any Test Cases that are not required for this
+   Test Run.
 #. Click **Save** button.
 
 .. note::
@@ -83,14 +85,16 @@ To add a Test Case to an existing Test Run:
 
 .. note::
 
-    Test Cases can be added via the Test Run view as well. While the Test Run is
-    opened youmay use the **Cases** sub-menu to add/remove other Test Cases to this Test Run.
+    Test Cases can be added via the Test Run view as well. While the Test Run
+    is opened you may use the **Cases** sub-menu to add/remove other
+    Test Cases to this Test Run.
 
 
 Cloning a Test Run
 ------------------
 
-Test Runs can be cloned for easier creation of testing tasks between team members.
+Test Runs can be cloned for easier creation of testing tasks between
+team members.
 To clone a Test Run:
 
 #. Open the Test Run.
@@ -101,7 +105,8 @@ To clone a Test Run:
 
    |The Clone button 2|
 
-#. Enter the details for the cloned Test Run. Details are auto-populated from the original.
+#. Enter the details for the cloned Test Run. Details are auto-populated
+   from the original.
 #. Click **Save** button.
 
 Editing a Test Run
@@ -173,8 +178,9 @@ displayed when a report is generated for a Test Run.
 
 To execute a Test Run:
 
-#. From the Dashboard or a Test Runs list, click the Test Run to execute. The Test Run
-   summary is displayed.  You are able to change Test Case statuses from this page. 
+#. From the Dashboard or a Test Runs list, click the Test Run to execute. The
+   Test Run summary is displayed.  You are able to change Test Case statuses
+   from this page.
 
    |The Test Run summary|
 
@@ -184,26 +190,6 @@ To execute a Test Run:
 
    |A Test Case|
 
-
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| Icon        | Meaning                                                                                                                   |
-+=============+===========================================================================================================================+
-| |image78|   | Idle - Default value. The Test Case has not been examined.                                                                |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image79|   | Running - Test Case is in progress.                                                                                       |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image80|   | Paused - This status is used to denote a problem with the test case itself that prevents the test from being completed.   |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image81|   | Passed - Test Case met all the expected results.                                                                          |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image82|   | Failed - Test Case did not meet all the expected results, or produced an unhandled exception.                             |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image83|   | Blocked - Test Case has a dependency that has failed.                                                                     |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image84|   | Error - Test environment has problems that prevent Test Case     execution.                                               |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
-| |image85|   | Waived - Test Case is not suitable for this run or blocked by other cases.                                                |
-+-------------+---------------------------------------------------------------------------------------------------------------------------+
 
 Bulk update of Test Cases
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,7 +212,7 @@ report provides the following information:
 
 -  **Plan details:**
 
-   -  Product 
+   -  Product
    -  Product version
    -  Plan
    -  Plan version
@@ -278,22 +264,6 @@ To generate a report for a Test Run:
 .. |The Clone button 2| image:: ../_static/Clone_Test_Run.png
 .. |The Test Run summary| image:: ../_static/Runs_Details.png
 .. |A Test Case| image:: ../_static/Enter_Test_Results.png
-.. |image70| image:: ../_static/idle.png
-.. |image71| image:: ../_static/running.png
-.. |image72| image:: ../_static/paused.png
-.. |image73| image:: ../_static/pass.png
-.. |image74| image:: ../_static/failed.png
-.. |image75| image:: ../_static/blocked.png
-.. |image76| image:: ../_static/error.png
-.. |image77| image:: ../_static/waived.png
-.. |image78| image:: ../_static/idle.png
-.. |image79| image:: ../_static/running.png
-.. |image80| image:: ../_static/paused.png
-.. |image81| image:: ../_static/pass.png
-.. |image82| image:: ../_static/failed.png
-.. |image83| image:: ../_static/blocked.png
-.. |image84| image:: ../_static/error.png
-.. |image85| image:: ../_static/waived.png
 .. |The Set to finished button| image:: ../_static/Set_To_Finished.png
 .. |The Set to running button| image:: ../_static/Set_To_Running.png
 .. |The Report button| image:: ../_static/Click_Report.png

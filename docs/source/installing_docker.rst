@@ -100,55 +100,67 @@ To upgrade running Kiwi TCMS containers execute the following commands::
     back these up before upgrading!
 
 
+Allow Kiwi TCMS HTTP access
+---------------------------
+
+By default the Kiwi TCMS container enforces HTTPS connections, by redirecting
+HTTP (80) requests to the HTTPS port (443). This behavior may be deactivated
+via the ``KIWI_DONT_ENFORCE_HTTPS`` environment variable. If starting the
+application via ``docker compose`` then add::
+
+        environment:
+            KIWI_DONT_ENFORCE_HTTPS: "true"
+
+to ``docker-compose.yml``. If starting the container via ``docker run`` then
+add ``-e KIWI_DONT_ENFORCE_HTTPS=true`` to the command line.
+
+
 SSL configuration
 -----------------
 
-By default Kiwi TCMS is served via HTTPS. ``docker-compose.yml`` is configured with
-a default self-signed certificate stored in ``etc/kiwitcms/ssl/``. If you want to
-use different SSL certificate you need to update the ``localhost.key`` and
-``localhost.crt`` files in that directory or bind-mount your own SSL directory to
-``/Kiwi/ssl`` inside the docker container!
+By default Kiwi TCMS is served via HTTPS. ``docker-compose.yml`` is configured
+witha default self-signed certificate stored in ``etc/kiwitcms/ssl/``. If you
+want to use different SSL certificate you need to update the ``localhost.key``
+and ``localhost.crt`` files in that directory or bind-mount your own SSL
+directory to ``/Kiwi/ssl`` inside the docker container!
 
-More information about generating your own self-signed certificates can be found at
-https://wiki.centos.org/HowTos/Https.
+More information about generating your own self-signed certificates can be
+found at https://wiki.centos.org/HowTos/Https.
 
 
 Reverse proxy SSL
 -----------------
 
-To run Kiwi TCMS behind a reverse proxy, you may either directly pass HTTPS requests,
-or allow Kiwi TMCS to serve via HTTP. With the later being the preferred method, when
-the reverse proxy is terminating the SSL connection.
-
-Passing HTTPS to the container
-------------------------------
-
-For all of these domains the browser will see a wildcard SSL certificate for
+Sometimes you may want to serve Kiwi TCMS behind a reverse proxy which will
+also handle SSL termination. For example we serve https://public.tenant.kiwitcms.org,
+https://tcms.kiwitcms.org and a few other instances through Nginx. For all of
+these domains the browser will see a wildcard SSL certificate for
 ``*.kiwitcms.org``, while the individual docker containers are still configured
-with the default self-signed certificate! Here's how the configuration looks like::
+with the default self-signed certificate (that is the connection between
+Nginx and the docker container)! Here's how the configuration looks like::
 
     http {
         # default ssl certificates for *.kiwitcms.org
         ssl_certificate     /etc/nginx/wildcard_kiwitcms_org.crt;
         ssl_certificate_key /etc/nginx/wildcard_kiwitcms_org.key;
-    
+
         # default proxy settings
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-    
+
         server {
             listen 8080;
             server_name demo.kiwitcms.org;
-    
+
             location / {
                 return 301 https://$host$request_uri;
             }
         }
-    
+
         server {
             server_name demo.kiwitcms.org;
             listen 8443 ssl;
-    
+
             location / {
                 proxy_pass https://demo_kiwitcms_org_web:8443;
             }
@@ -161,32 +173,26 @@ Here is an equivalent configuration for `HAProxy <https://www.haproxy.org/>`_::
         bind *:8080
         reqadd X-Forwarded-Proto:\ http
         redirect scheme https code 301
-    
+
     frontend front_https
         # default ssl certificates for *.kiwitcms.org
         bind *:8443 ssl crt /etc/haproxy/ssl/
         reqadd X-Forwarded-Proto:\ https
-    
+
         acl kiwitcms hdr(host) -i demo.kiwitcms.org
         use_backend back_kiwitcms if kiwitcms
-    
+
     backend back_kiwitcms
         http-request set-header X-Forwarded-Port %[dst_port]
         http-request add-header X-Forwarded-Proto https
-    
+
         # some security tweaks
         rspadd Strict-Transport-Security:\ max-age=15768000
         rspadd X-XSS-Protection:\ 1;\ mode=block
-    
+
         # do not verify the self-signed cert
         server kiwi_web demo_kiwitcms_org_web:8443 ssl verify none
 
-Allow Kiwi TMCS HTTP access
----------------------------
-
-By default the Kiwi TCMS container enforces HTTPS connections, by redirecting HTTP
-requests to the HTTP port. This behavior may be deactivated, by starting the container
-adding ```-e KIWI_DONT_ENFORCE_HTTPS=true```.
 
 Customization
 -------------
@@ -205,7 +211,8 @@ This means you can edit ``docker-compose.yml`` to mount the host file
             - uploads:/Kiwi/uploads
             - ./local_settings.py:/venv/lib64/python3.6/site-packages/tcms/settings/local_settings.py
 
-essentially overriding any stock settings in this way!
+essentially overriding any stock settings in this way! For more information
+see :ref:`configuration`.
 
 .. warning::
 
@@ -255,12 +262,13 @@ the contents of ``Dockerfile`` and then::
 Troubleshooting
 ----------------
 
-The Kiwi TCMS container will print HTTPD logs on the docker console!
+The Kiwi TCMS container will print HTTPD logs on STDOUT!
 
 .. warning::
 
     You must start the containers in the foreground with ``docker-compose up``,
-    e.g. without the ``-d`` option in order to see their logs!
+    e.g. without the ``-d`` option in order to see their logs or use
+    ``docker container logs [-f|--tail 1000] kiwi_web``!
 
 In case you see a 500 Internal Server Error page and the error log does not
 provide a traceback you should configure the ``DEBUG`` setting to ``True`` and

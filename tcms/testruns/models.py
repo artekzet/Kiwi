@@ -1,23 +1,20 @@
 # -*- coding: utf-8 -*-
-import datetime
 from collections import namedtuple
 
+import vinaigrette
 from django.conf import settings
-from django.urls import reverse
 from django.db import models
 from django.db.models import Count
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import override
 
-import vinaigrette
-
-from tcms.core.models import TCMSActionModel
-from tcms.core.history import KiwiHistoricalRecords
 from tcms.core.contrib.linkreference.models import LinkReference
-from tcms.testcases.models import Bug
-from tcms.xmlrpc.serializer import TestExecutionXMLRPCSerializer
-from tcms.xmlrpc.serializer import TestRunXMLRPCSerializer
-from tcms.xmlrpc.utils import distinct_filter
-
+from tcms.core.history import KiwiHistoricalRecords
+from tcms.core.models import TCMSActionModel
+from tcms.rpc.serializer import (TestExecutionXMLRPCSerializer,
+                                 TestRunXMLRPCSerializer)
+from tcms.rpc.utils import distinct_filter
 
 TestExecutionStatusSubtotal = namedtuple('TestExecutionStatusSubtotal', [
     'StatusSubtotal',
@@ -74,6 +71,9 @@ class TestRun(TCMSActionModel):
 
     def _get_absolute_url(self):
         return reverse('testruns-get', args=[self.pk, ])
+
+    def get_absolute_url(self):
+        return self._get_absolute_url()
 
     def get_notify_addrs(self):
         """
@@ -143,9 +143,10 @@ class TestRun(TCMSActionModel):
         """
         # note fom Django docs: A count() call performs a SELECT COUNT(*)
         # behind the scenes !!!
-        return Bug.objects.filter(
-            case_run__run=self.pk
-        ).values('bug_id').distinct().count()
+        return LinkReference.objects.filter(
+            execution__run=self.pk,
+            is_defect=True,
+        ).distinct().count()
 
     def get_percentage(self, count):
         case_run_count = self.total_num_caseruns
@@ -156,8 +157,7 @@ class TestRun(TCMSActionModel):
         return percent
 
     def _get_completed_case_run_percentage(self):
-        ids = TestExecutionStatus.objects.filter(
-            name__in=TestExecutionStatus.complete_status_names).values_list('pk', flat=True)
+        ids = TestExecutionStatus.objects.exclude(weight=0).values_list('pk', flat=True)
 
         completed_caserun = self.case_run.filter(
             status__in=ids)
@@ -173,7 +173,7 @@ class TestRun(TCMSActionModel):
 
     def update_completion_status(self, is_finished):
         if is_finished:
-            self.stop_date = datetime.datetime.now()
+            self.stop_date = timezone.now()
         else:
             self.stop_date = None
 
@@ -210,13 +210,12 @@ class TestRun(TCMSActionModel):
 
         for _status_pk, total_info in caserun_statuses_subtotal.items():
             status_caseruns_count, caserun_status = total_info
-            status_name = caserun_status.name
 
             caseruns_total_count += status_caseruns_count
 
-            if status_name in TestExecutionStatus.complete_status_names:
+            if caserun_status.weight != 0:
                 complete_count += status_caseruns_count
-            if status_name in TestExecutionStatus.failure_status_names:
+            if caserun_status.weight < 0:
                 failure_count += status_caseruns_count
 
         # Final calculation
@@ -235,43 +234,12 @@ class TestRun(TCMSActionModel):
 
 
 class TestExecutionStatus(TCMSActionModel):
-    FAILED = 'FAILED'
-    BLOCKED = 'BLOCKED'
-    PASSED = 'PASSED'
-    IDLE = 'IDLE'
-
-    _icons = {
-        'IDLE': 'fa fa-question-circle-o',
-        'RUNNING': 'fa fa-play-circle-o',
-        'PAUSED': 'fa fa-pause-circle-o',
-        PASSED: 'fa fa-check-circle-o',
-        FAILED: 'fa fa-times-circle-o',
-        BLOCKED: 'fa fa-stop-circle-o',
-        'ERROR': 'fa fa-minus-circle',
-        'WAIVED': 'fa fa-commenting-o',
-    }
-
-    _css_classes = {
-        IDLE: 'idle',
-        FAILED: 'fail',
-        PASSED: 'pass',
-        BLOCKED: 'fail',
-        'ERROR': 'fail',
-    }
-
-    _colors = {
-        IDLE: '#72767b',
-        'PASS': '#92d400',
-        'FAIL': '#cc0000'
-    }
-
-    complete_status_names = (PASSED, 'ERROR', FAILED, 'WAIVED')
-    failure_status_names = ('ERROR', FAILED)
-    idle_status_names = (IDLE,)
-    chart_status_names = ('pass', 'fail', 'idle', 'other')
 
     id = models.AutoField(db_column='case_run_status_id', primary_key=True)
     name = models.CharField(max_length=60, blank=True, unique=True)
+    weight = models.IntegerField(default=0)
+    icon = models.CharField(max_length=64)
+    color = models.CharField(max_length=8)
 
     def __str__(self):
         return self.name
@@ -285,18 +253,6 @@ class TestExecutionStatus(TCMSActionModel):
     def get_names_ids(cls):
         """ Get all status names in reverse mapping between name and id """
         return dict((name, _id) for _id, name in cls.get_names().items())
-
-    def icon(self):
-        with override('en'):
-            return self._icons.get(self.name)
-
-    def color(self):
-        with override('en'):
-            return self._colors.get(self.color_code().upper(), '#ec7a08')
-
-    def color_code(self):
-        with override('en'):
-            return self._css_classes.get(self.name, 'other')
 
 
 # register model for DB translations
@@ -330,7 +286,7 @@ class TestExecution(TCMSActionModel):
         """
             Returns all links attached to this object!
         """
-        return LinkReference.objects.filter(test_case_run=self.pk)
+        return LinkReference.objects.filter(execution=self.pk)
 
     def __str__(self):
         return '%s: %s' % (self.pk, self.case_id)
@@ -343,23 +299,10 @@ class TestExecution(TCMSActionModel):
         serializer = TestExecutionXMLRPCSerializer(model_class=cls, queryset=query_set)
         return serializer.serialize_queryset()
 
-    def add_bug(self, bug_id, bug_system_id,
-                summary=None, description=None, bz_external_track=False):
-        return self.case.add_bug(
-            bug_id=bug_id,
-            bug_system_id=bug_system_id,
-            summary=summary,
-            description=description,
-            case_run=self,
-            bz_external_track=bz_external_track
-        )
-
-    def remove_bug(self, bug_id, run_id=None):
-        self.case.remove_bug(bug_id=bug_id, run_id=run_id)
-
     def get_bugs(self):
-        return Bug.objects.filter(
-            case_run__case_run_id=self.case_run_id)
+        return LinkReference.objects.filter(
+            execution=self.pk,
+            is_defect=True)
 
     def get_bugs_count(self):
         return self.get_bugs().count()

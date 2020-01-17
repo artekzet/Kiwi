@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.forms import EmailField
-from django.forms import ValidationError
+from django.forms import EmailField, ValidationError
 
 
 class MultipleEmailField(EmailField):
@@ -50,4 +49,4 @@ class MultipleEmailField(EmailField):
                 self.error_messages['invalid'] % {
                     'value': ', '.join(invalid_email_addrs)})
 
-        return valid_email_addrs
+        return self.delimiter.join(valid_email_addrs)

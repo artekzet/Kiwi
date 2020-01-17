@@ -1,108 +1,35 @@
 """
     This module implements Kiwi TCMS interface to external issue tracking systems.
-    :class:`tcms.issuetracker.types.IssueTrackerType` provides the interface
-    while the rest of the classes in this module implement it! Refer to each
-    implementor class for integration specifics!
+    Refer to each implementor class for integration specifics!
 """
 
 import os
 import tempfile
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
-import jira
-import github
 import bugzilla
+import github
 import gitlab
-
+import jira
+import redminelib
 from django.conf import settings
 
-from tcms.issuetracker import bugzilla_integration
-from tcms.issuetracker import jira_integration
-from tcms.issuetracker import github_integration
-from tcms.issuetracker import gitlab_integration
+from tcms.core.contrib.linkreference.models import LinkReference
+from tcms.issuetracker import (bugzilla_integration, github_integration,
+                               gitlab_integration, jira_integration,
+                               redmine_integration)
+from tcms.issuetracker.base import IssueTrackerType
+from tcms.issuetracker.kiwitcms import KiwiTCMS  # noqa, pylint: disable=unused-import
 
 
-class IssueTrackerType:
+def from_name(name):
     """
-        Represents actions which can be performed with issue trackers.
-        This is a common interface for all issue trackers that Kiwi TCMS
-        supports!
+        Return the class which matches ``name`` if it exists inside this
+        module or raise an exception.
     """
-
-    def __init__(self, tracker):
-        """
-            :tracker: - BugSystem object
-        """
-        self.tracker = tracker
-
-    @classmethod
-    def from_name(cls, name):
-        """
-            Return the class which matches ``name`` if it exists inside this
-            module or raise an exception.
-        """
-        if name not in globals():
-            raise NotImplementedError('IT of type %s is not supported' % name)
-        return globals()[name]
-
-    def report_issue_from_testcase(self, caserun):
-        """
-            When marking Test Case results inside a Test Run there is a
-            `Report` link. When the `Report` link is clicked this method is called
-            to help the user report an issue in the IT.
-
-            This is implemented by constructing an URL string which will pre-fill
-            bug details like steps to reproduce, product, version, etc from the
-            test case. Then we open this URL into another browser window!
-
-            :caserun: - TestExecution object
-            :return: - string - URL
-        """
-        raise NotImplementedError()
-
-    def add_testcase_to_issue(self, testcases, issue):
-        """
-            When adding issues to Test Execution results there is a
-            'Check to add test cases to Issue tracker' checkbox. If
-            selected this method is called to link the bug report to the
-            test case which was used to discover the bug.
-
-            Usually this is implemented by adding a new comment pointing
-            back to the test case via the internal RPC object.
-
-            :testcases: - list of TestCase objects
-            :issue: - Bug object
-        """
-        raise NotImplementedError()
-
-    # pylint: disable = invalid-name, no-self-use
-    # todo: we should allow this method to raise and the specific error
-    # message must be returned to the caller instead of generic one.
-    # as it is LinkOnly tracker doesn't have any integrations but the error
-    # message is misleading
-    def is_adding_testcase_to_issue_disabled(self):
-        """
-            When is linking a TC to a Bug report disabled?
-            Usually when all the required credentials are provided.
-
-            :return: - boolean
-        """
-        return not (self.tracker.api_url
-                    and self.tracker.api_username
-                    and self.tracker.api_password)
-
-    def all_issues_link(self, _ids):
-        """
-            Used in testruns.views.get() aka run/report.html to produce
-            a single URL which will open all reported issues into a single
-            page in the Issue tracker. For example Bugzilla supports listing
-            multiple bugs into a table. GitHub on the other hand doesn't
-            support this functionality.
-
-            :ids: - list of issues reported against test executions
-
-            :return: - None if not suported or string representing the URL
-        """
+    if name not in globals():
+        raise NotImplementedError('IT of type %s is not supported' % name)
+    return globals()[name]
 
 
 class Bugzilla(IssueTrackerType):
@@ -119,8 +46,8 @@ class Bugzilla(IssueTrackerType):
         into Bugzilla!
     """
 
-    def __init__(self, tracker):
-        super().__init__(tracker)
+    def __init__(self, bug_system):
+        super().__init__(bug_system)
 
         # directory for Bugzilla credentials
         self._bugzilla_cache_dir = getattr(
@@ -128,57 +55,39 @@ class Bugzilla(IssueTrackerType):
             "BUGZILLA_AUTH_CACHE_DIR",
             tempfile.mkdtemp(prefix='.bugzilla-')
         )
+
+    def _rpc_connection(self):
         if not os.path.exists(self._bugzilla_cache_dir):
             os.makedirs(self._bugzilla_cache_dir, 0o700)
 
-        self._rpc = None
+        return bugzilla.Bugzilla(
+            self.bug_system.api_url,
+            user=self.bug_system.api_username,
+            password=self.bug_system.api_password,
+            cookiefile=self._bugzilla_cache_dir + 'cookie',
+            tokenfile=self._bugzilla_cache_dir + 'token',
+        )
 
-    @property
-    def rpc(self):
-        if self._rpc is None:
-            self._rpc = bugzilla.Bugzilla(
-                self.tracker.api_url,
-                user=self.tracker.api_username,
-                password=self.tracker.api_password,
-                cookiefile=self._bugzilla_cache_dir + 'cookie',
-                tokenfile=self._bugzilla_cache_dir + 'token',
-            )
-        return self._rpc
+    def add_testexecution_to_issue(self, executions, issue_url):
+        bug_id = self.bug_id_from_url(issue_url)
+        for execution in executions:
+            bugzilla_integration.BugzillaThread(self.rpc,
+                                                self.bug_system,
+                                                execution,
+                                                bug_id).start()
 
-    def add_testcase_to_issue(self, testcases, issue):
-        for case in testcases:
-            bugzilla_integration.BugzillaThread(self.rpc, case, issue).start()
-
-    def all_issues_link(self, ids):
-        if not self.tracker.base_url:
-            return None
-
-        if not self.tracker.base_url.endswith('/'):
-            self.tracker.base_url += '/'
-
-        return self.tracker.base_url + 'buglist.cgi?bugidtype=include&bug_id=%s' % ','.join(ids)
-
-    def report_issue_from_testcase(self, caserun):
+    def report_issue_from_testexecution(self, execution, user):
         args = {}
-        args['cf_build_id'] = caserun.run.build.name
+        args['cf_build_id'] = execution.run.build.name
 
-        txt = caserun.case.get_text_with_version(case_text_version=caserun.case_text_version)
+        args['comment'] = self._report_comment(execution)
+        args['component'] = execution.case.component.values_list('name',
+                                                                 flat=True)
+        args['product'] = execution.run.plan.product.name
+        args['short_desc'] = 'Test case failure: %s' % execution.case.summary
+        args['version'] = execution.run.product_version
 
-        comment = "Filed from caserun %s\n\n" % caserun.get_full_url()
-        comment += "Version-Release number of selected " \
-                   "component (if applicable):\n"
-        comment += '%s\n\n' % caserun.build.name
-        comment += "Steps to Reproduce: \n%s\n\n" % txt
-        comment += "Actual results: \n<describe what happened>\n\n"
-
-        args['comment'] = comment
-        args['component'] = caserun.case.component.values_list('name',
-                                                               flat=True)
-        args['product'] = caserun.run.plan.product.name
-        args['short_desc'] = 'Test case failure: %s' % caserun.case.summary
-        args['version'] = caserun.run.product_version
-
-        url = self.tracker.base_url
+        url = self.bug_system.base_url
         if not url.endswith('/'):
             url += '/'
 
@@ -198,44 +107,39 @@ class JIRA(IssueTrackerType):
         the code uses ``jira.JIRA.DEFAULT_OPTIONS`` from the ``jira`` Python module!
     """
 
-    def __init__(self, tracker):
-        super(JIRA, self).__init__(tracker)
-
+    def _rpc_connection(self):
         if hasattr(settings, 'JIRA_OPTIONS'):
             options = settings.JIRA_OPTIONS
         else:
             options = None
 
-        # b/c jira.JIRA tries to connect when object is created
-        # see https://github.com/kiwitcms/Kiwi/issues/100
-        if not self.is_adding_testcase_to_issue_disabled():
-            self.rpc = jira.JIRA(
-                tracker.api_url,
-                basic_auth=(self.tracker.api_username, self.tracker.api_password),
-                options=options,
-            )
+        return jira.JIRA(
+            self.bug_system.api_url,
+            basic_auth=(self.bug_system.api_username, self.bug_system.api_password),
+            options=options,
+        )
 
-    def add_testcase_to_issue(self, testcases, issue):
-        for case in testcases:
-            jira_integration.JiraThread(self.rpc, case, issue).start()
+    @classmethod
+    def bug_id_from_url(cls, url):
+        """
+            Jira IDs are the last group of chars at the end of the URL.
+            For example https://issues.jenkins-ci.org/browse/JENKINS-31044
+        """
+        return url.strip().split('/')[-1]
 
-    def all_issues_link(self, ids):
-        if not self.tracker.base_url:
-            return None
+    def add_testexecution_to_issue(self, executions, issue_url):
+        bug_id = self.bug_id_from_url(issue_url)
+        for execution in executions:
+            jira_integration.JiraThread(self.rpc, self.bug_system, execution, bug_id).start()
 
-        if not self.tracker.base_url.endswith('/'):
-            self.tracker.base_url += '/'
-
-        return self.tracker.base_url + 'issues/?jql=issueKey%%20in%%20(%s)' % '%2C%20'.join(ids)
-
-    def report_issue_from_testcase(self, caserun):
+    def report_issue_from_testexecution(self, execution, user):
         """
             For the HTML API description see:
             https://confluence.atlassian.com/display/JIRA050/Creating+Issues+via+direct+HTML+links
         """
         # note: your jira instance needs to have the same projects
         # defined otherwise this will fail!
-        project = self.rpc.project(caserun.run.plan.product.name)
+        project = self.rpc.project(execution.run.plan.product.name)
 
         try:
             issue_type = self.rpc.issue_type_by_name('Bug')
@@ -245,33 +149,23 @@ class JIRA(IssueTrackerType):
         args = {
             'pid': project.id,
             'issuetype': issue_type.id,
-            'summary': 'Failed test: %s' % caserun.case.summary,
+            'summary': 'Failed test: %s' % execution.case.summary,
         }
 
         try:
             # apparently JIRA can't search users via their e-mail so try to
             # search by username and hope that it matches
-            tested_by = caserun.tested_by
+            tested_by = execution.tested_by
             if not tested_by:
-                tested_by = caserun.assignee
+                tested_by = execution.assignee
 
             args['reporter'] = self.rpc.user(tested_by.username).key
         except jira.JIRAError:
             pass
 
-        txt = caserun.case.get_text_with_version(case_text_version=caserun.case_text_version)
+        args['description'] = self._report_comment(execution)
 
-        comment = "Filed from caserun %s\n\n" % caserun.get_full_url()
-        comment += "Product:\n%s\n\n" % caserun.run.plan.product.name
-        comment += "Component(s):\n%s\n\n" % caserun.case.component.values_list('name', flat=True)
-        comment += "Version-Release number of selected " \
-                   "component (if applicable):\n"
-        comment += "%s\n\n" % caserun.build.name
-        comment += "Steps to Reproduce: \n%s\n\n" % txt
-        comment += "Actual results: \n<describe what happened>\n\n"
-        args['description'] = comment
-
-        url = self.tracker.base_url
+        url = self.bug_system.base_url
         if not url.endswith('/'):
             url += '/'
 
@@ -289,108 +183,158 @@ class GitHub(IssueTrackerType):
 
             You can leave the ``api_url`` and ``api_username`` fields blank because
             the integration code doesn't use them!
-
-        .. note::
-
-            GitHub does not support displaying multiple issues in a table format like
-            Bugzilla and JIRA do. This means that in Test Execution Report view you will
-            see GitHub issues listed one by one and there will not be a link to open all
-            of them inside GitHub's interface!
     """
 
-    def __init__(self, tracker):
-        super(GitHub, self).__init__(tracker)
-
+    def _rpc_connection(self):
         # NOTE: we use an access token so only the password field is required
-        self.rpc = github.Github(self.tracker.api_password)
+        return github.Github(self.bug_system.api_password)
 
-    def add_testcase_to_issue(self, testcases, issue):
-        for case in testcases:
-            github_integration.GitHubThread(self.rpc, self.tracker, case, issue).start()
+    def add_testexecution_to_issue(self, executions, issue_url):
+        bug_id = self.bug_id_from_url(issue_url)
+        for execution in executions:
+            github_integration.GitHubThread(self.rpc, self.bug_system, execution, bug_id).start()
 
     def is_adding_testcase_to_issue_disabled(self):
-        return not (self.tracker.base_url and self.tracker.api_password)
+        return not (self.bug_system.base_url and self.bug_system.api_password)
 
-    def report_issue_from_testcase(self, caserun):
+    def report_issue_from_testexecution(self, execution, user):
         """
             GitHub only supports title and body parameters
         """
         args = {
-            'title': 'Failed test: %s' % caserun.case.summary,
+            'title': 'Failed test: %s' % execution.case.summary,
+            'body': self._report_comment(execution),
         }
 
-        txt = caserun.case.get_text_with_version(case_text_version=caserun.case_text_version)
+        try:
+            repo_id = github_integration.GitHubThread.repo_id(self.bug_system)
+            repo = self.rpc.get_repo(repo_id)
+            issue = repo.create_issue(**args)
 
-        comment = "Filed from caserun %s\n\n" % caserun.get_full_url()
-        comment += "Product:\n%s\n\n" % caserun.run.plan.product.name
-        comment += "Component(s):\n%s\n\n" % caserun.case.component.values_list('name', flat=True)
-        comment += "Version-Release number of selected " \
-                   "component (if applicable):\n"
-        comment += "%s\n\n" % caserun.build.name
-        comment += "Steps to Reproduce: \n%s\n\n" % txt
-        comment += "Actual results: \n<describe what happened>\n\n"
-        args['body'] = comment
+            # add a link reference that will be shown in the UI
+            LinkReference.objects.get_or_create(
+                execution=execution,
+                url=issue.html_url,
+                is_defect=True,
+            )
 
-        url = self.tracker.base_url
-        if not url.endswith('/'):
-            url += '/'
+            return issue.html_url
+        except Exception:  # pylint: disable=broad-except
+            # something above didn't work so return a link for manually
+            # entering issue details with info pre-filled
+            url = self.bug_system.base_url
+            if not url.endswith('/'):
+                url += '/'
 
-        return url + '/issues/new?' + urlencode(args, True)
+            return url + '/issues/new?' + urlencode(args, True)
 
 
 class Gitlab(IssueTrackerType):
     """
         Support for Gitlab. Requires:
 
-        :base_url: - URL to a Gitlab repository for which we're going to report issues
-        :api_password: - Gitlab API token.
+        :base_url: URL to a GitLab repository for which we're going to report issues
+        :api_url: URL to GitLab instance. Usually gitlab.com!
+        :api_password: GitLab API token.
+
+        .. note::
+
+            You can leave ``api_username`` field blank because
+            the integration code doesn't use it!
     """
 
-    def __init__(self, tracker):
-        super(Gitlab, self).__init__(tracker)
-
+    def _rpc_connection(self):
         # we use an access token so only the password field is required
-        self.rpc = gitlab.Gitlab(self.tracker.api_url, private_token=self.tracker.api_password)
+        return gitlab.Gitlab(self.bug_system.api_url,
+                             private_token=self.bug_system.api_password)
 
-    def add_testcase_to_issue(self, testcases, issue):
-        for case in testcases:
-            gitlab_integration.GitlabThread(self.rpc, self.tracker, case, issue).start()
+    def add_testexecution_to_issue(self, executions, issue_url):
+        bug_id = self.bug_id_from_url(issue_url)
+        for execution in executions:
+            gitlab_integration.GitlabThread(self.rpc, self.bug_system, execution, bug_id).start()
 
     def is_adding_testcase_to_issue_disabled(self):
-        return not (self.tracker.base_url and self.tracker.api_password)
+        return not (self.bug_system.api_url and self.bug_system.api_password)
 
-    def report_issue_from_testcase(self, caserun):
+    def report_issue_from_testexecution(self, execution, user):
         args = {
-            'issue[title]': 'Failed test: %s' % caserun.case.summary,
+            'issue[title]': 'Failed test: %s' % execution.case.summary,
+            'issue[description]': self._report_comment(execution),
         }
 
-        txt = caserun.case.get_text_with_version(case_text_version=caserun.case_text_version)
-
-        comment = "Filed from caserun %s\n\n" % caserun.get_full_url()
-        comment += "**Product**:\n%s\n\n" % caserun.run.plan.product.name
-        comment += "**Component(s)**:\n%s\n\n"\
-                   % caserun.case.component.values_list('name', flat=True)
-        comment += "Version-Release number of selected " \
-                   "component (if applicable):\n"
-        comment += "%s\n\n" % caserun.build.name
-        comment += "**Steps to Reproduce**: \n%s\n\n" % txt
-        comment += "**Actual results**: \n<describe what happened>\n\n"
-        args['issue[description]'] = comment
-
-        url = self.tracker.base_url
+        url = self.bug_system.base_url
         if not url.endswith('/'):
             url += '/'
 
         return url + '/issues/new?' + urlencode(args, True)
 
 
-class LinkOnly(IssueTrackerType):
+class Redmine(IssueTrackerType):
     """
-        Allow only linking issues to TestExecution records. Can be used when your
-        issue tracker is not integrated with Kiwi TCMS.
+        Support for Redmine. Requires:
 
-        No additional API integration available!
+        :api_url: - the API URL for your Redmine instance
+        :api_username: - a username registered in Redmine
+        :api_password: - the password for this username
     """
 
-    def is_adding_testcase_to_issue_disabled(self):
-        return True
+    def _rpc_connection(self):
+        return redminelib.Redmine(
+            self.bug_system.api_url,
+            username=self.bug_system.api_username,
+            password=self.bug_system.api_password
+        )
+
+    def add_testexecution_to_issue(self, executions, issue_url):
+        bug_id = self.bug_id_from_url(issue_url)
+        for execution in executions:
+            redmine_integration.RedmineThread(self.rpc,
+                                              self.bug_system,
+                                              execution,
+                                              bug_id).start()
+
+    def find_project_by_name(self, name):
+        """
+            Return a Redmine project which matches the given product name.
+
+            .. note::
+
+                If there is no match then return the first project in Redmine.
+        """
+        try:
+            return self.rpc.project.get(name)
+        except redminelib.exceptions.ResourceNotFoundError:
+            projects = self.rpc.project.all()
+            return projects[0]
+
+    @staticmethod
+    def find_issue_type_by_name(project, name):
+        """
+            Return a Redmine tracker matching name ('Bug').
+
+            .. note::
+
+                If there is no match then return the first one!
+        """
+        for trk in project.trackers:
+            if str(trk).lower() == name.lower():
+                return trk
+
+        return project.trackers[0]
+
+    def report_issue_from_testexecution(self, execution, user):
+        project = self.find_project_by_name(execution.run.plan.product.name)
+
+        issue_type = self.find_issue_type_by_name(project, 'Bug')
+
+        query = "issue[tracker_id]=" + str(issue_type.id)
+        query += "&issue[subject]=" + quote('Failed test: %s' % execution.case.summary)
+
+        comment = self._report_comment(execution)
+        query += "&issue[description]=%s" % quote(comment)
+
+        url = self.bug_system.base_url
+        if not url.endswith('/'):
+            url += '/'
+
+        return url + '/projects/%s/issues/new?' % project.id + query

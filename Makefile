@@ -54,8 +54,7 @@ check: flake8 test
 .PHONY: pylint
 pylint:
 	pylint -d missing-docstring *.py kiwi_lint/
-	PYTHONPATH=.:./tcms/ pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d missing-docstring -d duplicate-code -d class-based-view-required tcms/
-	PYTHONPATH=. DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d all -e class-based-view-required tcms/
+	PYTHONPATH=.:./tcms/ DJANGO_SETTINGS_MODULE=$(DJANGO_SETTINGS_MODULE) pylint --load-plugins=pylint_django --load-plugins=kiwi_lint -d missing-docstring -d duplicate-code tcms/
 
 .PHONY: bandit
 bandit:
@@ -71,8 +70,14 @@ bandit_site_packages:
 
 .PHONY: docker-image
 docker-image:
-	find -name "*.pyc" -delete
-	./tests/check-build
+	sudo rm -rf dist/
+	docker build -t kiwitcms/buildroot -f Dockerfile.buildroot .
+	docker run --rm --security-opt label=disable \
+	            -v `pwd`:/host --entrypoint /bin/cp kiwitcms/buildroot \
+	            -r /Kiwi/dist/ /host/
+	docker run --rm --security-opt label=disable \
+	            -v `pwd`:/host --entrypoint /bin/cp kiwitcms/buildroot \
+	            -r /venv /host/dist/
 	docker build -t kiwitcms/kiwi:latest .
 
 .PHONY: test-docker-image
@@ -97,6 +102,10 @@ check-docs-source-in-git: docs
 	    echo "HELP: execute 'make docs' and commit to fix this"; \
 	    exit 1; \
 	fi
+
+.PHONY: doc8
+doc8:
+	doc8 docs/source
 
 .PHONY: help
 help:
@@ -124,5 +133,6 @@ build-for-pypi:
 
 .PHONY: messages
 messages:
-	./manage.py makemessages --no-obsolete --ignore "test*.py"
-	ls tcms/locale/*/LC_MESSAGES/*.po | xargs -n 1 -I @ msgattrib -o @ --no-fuzzy @
+	./manage.py makemessages --locale en --no-obsolete --ignore "test*.py"
+	git checkout tcms/locale/eo_UY/
+	ls tcms/locale/en/LC_MESSAGES/*.po | xargs -n 1 -I @ msgattrib -o @ --no-fuzzy @

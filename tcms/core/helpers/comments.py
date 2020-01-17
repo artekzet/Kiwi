@@ -3,12 +3,10 @@
 Functions that help access comments
 of objects.
 """
-from datetime import datetime
-
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-
+from django.utils import timezone
 from django_comments.models import Comment
 
 
@@ -35,13 +33,31 @@ def add_comment(objs, comments, user, submit_date=None):
         add_comment([testrun,], comments, testuser)
     """
     site = Site.objects.get(pk=settings.SITE_ID)
-    content_type = ContentType.objects.get_for_model(model=objs[0].__class__)
     for obj in objs:
+        content_type = ContentType.objects.get_for_model(model=obj.__class__)
         Comment.objects.create(content_type=content_type,
                                site=site,
                                object_pk=obj.pk,
                                user=user,
                                comment=comments,
-                               submit_date=submit_date or datetime.now(),
+                               submit_date=submit_date or timezone.now(),
                                user_email=user.email,
                                user_name=user.username)
+
+
+def get_comments(obj):
+    content_type = ContentType.objects.get_for_model(obj)
+    return Comment.objects.filter(
+        content_type=content_type,
+        object_pk=obj.pk,
+        site=settings.SITE_ID,
+        is_removed=False
+    ).select_related(
+        'user'
+    ).only(
+        'submit_date',
+        'user__username',
+        'comment'
+    ).order_by(
+        'pk'
+    )

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
-from django.db.models import Q
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 User = get_user_model()  # pylint: disable=invalid-name
 
@@ -23,8 +22,7 @@ class UserField(forms.CharField):
         if value == '' or value is None:
             if self.required:
                 raise ValidationError('A user name or user ID is required.')
-            else:
-                return None
+            return None
         if isinstance(value, int):
             try:
                 return User.objects.get(pk=value)

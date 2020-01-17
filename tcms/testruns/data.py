@@ -3,28 +3,11 @@
 from itertools import groupby
 
 from django.conf import settings
-from django.db.models import F
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import F
 from django_comments.models import Comment
 
-from tcms.testcases.models import Bug
 from tcms.testruns.models import TestExecution
-from tcms.testruns.models import TestExecutionStatus
-
-
-def get_run_bug_ids(run_id):
-    """Get list of pairs of bug ID and bug link that are added to a run
-
-    :param int run_id: ID of test run.
-    :return: list of pairs of bug ID and bug link.
-    :rtype: list
-    """
-    return Bug.objects.values(
-        'bug_id',
-        'bug_system',
-        'bug_system__tracker_type',
-        'bug_system__url_reg_exp'
-    ).distinct().filter(case_run__run=run_id)
 
 
 class TestExecutionDataMixin:
@@ -54,35 +37,6 @@ class TestExecutionDataMixin:
             'manual': manual_count,
             'automated': automated_count,
         }
-
-    @staticmethod
-    def get_execution_bugs(run_pk):
-        """Get execution bugs for run report
-
-        :param int run_pk: run's pk whose executions' bugs will be retrieved.
-        :return: the mapping between execution id and bug information containing
-            formatted bug URL.
-        :rtype: dict
-        """
-
-        bugs = Bug.objects.filter(
-            case_run__run=run_pk
-        ).values(
-            'case_run',
-            'bug_id',
-            'bug_system__url_reg_exp'
-        ).order_by('case_run')
-
-        rows = []
-        for row in bugs:
-            row['bug_url'] = row['bug_system__url_reg_exp'] % row['bug_id']
-            rows.append(row)
-
-        case_run_bugs = {}
-        for case_run_id, bugs_info in groupby(rows, lambda row: row['case_run']):
-            case_run_bugs[case_run_id] = list(bugs_info)
-
-        return case_run_bugs
 
     @staticmethod
     def get_execution_comments(run_pk):
@@ -144,9 +98,9 @@ class TestExecutionDataMixin:
         idle_count = 0
         complete_count = 0
         for case_run in executions:
-            if case_run.status.name in TestExecutionStatus.idle_status_names:
+            if case_run.status.weight == 0:
                 idle_count += 1
-            elif case_run.status.name in TestExecutionStatus.complete_status_names:
+            else:
                 complete_count += 1
 
         return {'idle': idle_count, 'complete': complete_count}

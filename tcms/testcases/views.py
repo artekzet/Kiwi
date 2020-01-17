@@ -1,34 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import itertools
-
 from django.conf import settings
 from django.contrib import messages
-from django.test import modify_settings
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.test import modify_settings
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.http import require_GET
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
-from django.views.generic.base import TemplateView
+from django.views.generic import DetailView
+from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.base import TemplateView, View
 
-from tcms.core.contrib.comments.utils import get_comments
+from tcms.core.contrib.linkreference.models import LinkReference
+from tcms.core.helpers.comments import get_comments
+from tcms.core.response import ModifySettingsTemplateResponse
+from tcms.management.models import Priority, Tag
 from tcms.search import remove_from_request_path
 from tcms.search.order import order_case_queryset
-from tcms.testcases.models import TestCase, TestCaseStatus, \
-    TestCasePlan
-from tcms.management.models import Priority, Tag
+from tcms.testcases.forms import CloneCaseForm, SearchCaseForm, TestCaseForm
+from tcms.testcases.forms import CaseNotifyFormSet
+from tcms.testcases.models import TestCase, TestCasePlan, TestCaseStatus
 from tcms.testplans.models import TestPlan
-from tcms.testruns.models import TestExecution
-from tcms.testruns.models import TestExecutionStatus
-from tcms.testcases.forms import NewCaseForm, \
-    SearchCaseForm, CaseNotifyForm, CloneCaseForm
-from tcms.testcases.fields import MultipleEmailField
-
+from tcms.testruns.models import TestExecution, TestExecutionStatus
 
 TESTCASE_OPERATION_ACTIONS = (
     'search', 'sort', 'update',
@@ -43,7 +40,7 @@ TESTCASE_OPERATION_ACTIONS = (
 # helper functions
 
 
-def plan_from_request_or_none(request):
+def plan_from_request_or_none(request):  # pylint: disable=missing-permission-required
     """Get TestPlan from REQUEST
 
     This method relies on the existence of from_plan within REQUEST.
@@ -54,101 +51,52 @@ def plan_from_request_or_none(request):
     return get_object_or_404(TestPlan, plan_id=test_plan_id)
 
 
-def update_case_email_settings(test_case, n_form):
-    """Update testcase's email settings."""
-
-    test_case.emailing.notify_on_case_update = n_form.cleaned_data[
-        'notify_on_case_update']
-    test_case.emailing.notify_on_case_delete = n_form.cleaned_data[
-        'notify_on_case_delete']
-    test_case.emailing.auto_to_case_author = n_form.cleaned_data[
-        'author']
-    test_case.emailing.auto_to_case_tester = n_form.cleaned_data[
-        'default_tester_of_case']
-    test_case.emailing.auto_to_run_manager = n_form.cleaned_data[
-        'managers_of_runs']
-    test_case.emailing.auto_to_run_tester = n_form.cleaned_data[
-        'default_testers_of_runs']
-    test_case.emailing.auto_to_case_run_assignee = n_form.cleaned_data[
-        'assignees_of_case_runs']
-
-    default_tester = n_form.cleaned_data['default_tester_of_case']
-    if (default_tester and test_case.default_tester_id):
-        test_case.emailing.auto_to_case_tester = True
-
-    # Continue to update CC list
-    valid_emails = n_form.cleaned_data['cc_list']
-    test_case.emailing.cc_list = MultipleEmailField.delimiter.join(valid_emails)
-
-    test_case.emailing.save()
-
-
-def group_case_bugs(bugs):
-    """Group bugs using bug_id."""
-    grouped_bugs = []
-
-    for _pk, _bugs in itertools.groupby(bugs, lambda b: b.bug_id):
-        grouped_bugs.append((_pk, list(_bugs)))
-
-    return grouped_bugs
-
-
 @method_decorator(permission_required('testcases.add_testcase'), name='dispatch')
-class NewCaseView(TemplateView):
-
+class NewCaseView(CreateView):
+    model = TestCase
+    form_class = TestCaseForm
     template_name = 'testcases/mutable.html'
 
-    def get(self, request, *args, **kwargs):
-        test_plan = plan_from_request_or_none(request)
+    def get_form(self, form_class=None):
+        form = super().get_form()
+        # clear fields which are set dynamically via JavaScript
+        form.populate(self.request.POST.get('product', -1))
+        return form
 
-        default_form_parameters = {}
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['initial'].update({  # pylint: disable=objects-update-used
+            'author': self.request.user,
+        })
+
+        test_plan = plan_from_request_or_none(self.request)
         if test_plan:
-            default_form_parameters['product'] = test_plan.product_id
+            kwargs['initial']['product'] = test_plan.product_id
 
-        form = NewCaseForm(initial=default_form_parameters)
+        return kwargs
 
-        context_data = {
-            'test_plan': test_plan,
-            'form': form,
-            'notify_form': CaseNotifyForm(),
-        }
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['test_plan'] = plan_from_request_or_none(self.request)
+        context['notify_formset'] = kwargs.get('notify_formset') or CaseNotifyFormSet()
+        return context
 
-        return render(request, self.template_name, context_data)
+    def form_valid(self, form):
+        test_plan = plan_from_request_or_none(self.request)
 
-    def post(self, request, *args, **kwargs):
-        test_plan = plan_from_request_or_none(request)
+        notify_formset = CaseNotifyFormSet(self.request.POST)
+        if notify_formset.is_valid():
+            test_case = form.save()
+            if test_plan:
+                test_plan.add_case(test_case)
 
-        form = NewCaseForm(request.POST)
-        if request.POST.get('product'):
-            form.populate(product_id=request.POST['product'])
-        else:
-            form.populate()
+            notify_formset.instance = test_case
+            notify_formset.save()
 
-        notify_form = CaseNotifyForm(request.POST)
-
-        if form.is_valid() and notify_form.is_valid():
-            test_case = self.create_test_case(form, notify_form, test_plan)
             return HttpResponseRedirect(reverse('testcases-get', args=[test_case.pk]))
 
-        context_data = {
-            'test_plan': test_plan,
-            'form': form,
-            'notify_form': notify_form
-        }
-
-        return render(request, self.template_name, context_data)
-
-    def create_test_case(self, form, notify_form, test_plan):
-        """Create new test case"""
-        test_case = TestCase.create(author=self.request.user, values=form.cleaned_data)
-
-        # Assign the case to the plan
-        if test_plan:
-            test_plan.add_case(test_case)
-
-        update_case_email_settings(test_case, notify_form)
-
-        return test_case
+        # taken from FormMixin.form_invalid()
+        return self.render_to_response(self.get_context_data(notify_formset=notify_formset))
 
 
 def get_testcaseplan_sortkey_pk_for_testcases(plan, tc_ids):
@@ -235,7 +183,7 @@ def build_cases_search_form(request, populate=None, plan=None):
     return search_form
 
 
-def paginate_testcases(request, testcases):
+def paginate_testcases(request, testcases):  # pylint: disable=missing-permission-required
     """Paginate queried TestCases
 
     Arguments:
@@ -256,7 +204,7 @@ def paginate_testcases(request, testcases):
     return testcases[offset:offset + page_size]
 
 
-def sort_queried_testcases(request, testcases):
+def sort_queried_testcases(request, testcases):  # pylint: disable=missing-permission-required
     """Sort querid TestCases according to sort key
 
     Arguments:
@@ -281,7 +229,7 @@ def sort_queried_testcases(request, testcases):
     return tcs
 
 
-def query_testcases_from_request(request, plan=None):
+def query_testcases_from_request(request, plan=None):  # pylint: disable=missing-permission-required
     """Query TestCases according to criterias coming within REQUEST
 
     :param request: the REQUEST object.
@@ -316,7 +264,7 @@ def query_testcases_from_request(request, plan=None):
     return tcs, search_form
 
 
-def get_selected_testcases(request):
+def get_selected_testcases(request):  # pylint: disable=missing-permission-required
     """Get selected TestCases from client side
 
     TestCases are selected in two cases. One is user selects part of displayed
@@ -382,7 +330,7 @@ def get_tags_from_cases(case_ids, plan=None):
 
 
 @require_POST
-def list_all(request):
+def list_all(request):  # pylint: disable=missing-permission-required
     """
     Generate the TestCase list for the UI tabs in TestPlan page view.
     """
@@ -444,21 +392,23 @@ def list_all(request):
     return render(request, 'plan/get_cases.html', context_data)
 
 
-@require_GET
-def search(request):  # pylint: disable=missing-permission-required
+class TestCaseSearchView(TemplateView):  # pylint: disable=missing-permission-required
     """
-        Shows the search form which uses JSON RPC to fetch the resuts
+        Shows the search form which uses JSON RPC to fetch the results
     """
-    form = SearchCaseForm(request.GET)
-    if request.GET.get('product'):
-        form.populate(product_id=request.GET['product'])
-    else:
-        form.populate()
 
-    context_data = {
-        'form': form,
-    }
-    return render(request, 'testcases/search.html', context_data)
+    template_name = 'testcases/search.html'
+
+    def get_context_data(self, **kwargs):
+        form = SearchCaseForm(self.request.GET)
+        if self.request.GET.get('product'):
+            form.populate(product_id=self.request.GET['product'])
+        else:
+            form.populate()
+
+        return {
+            'form': form,
+        }
 
 
 class SimpleTestCaseView(TemplateView):  # pylint: disable=missing-permission-required
@@ -481,6 +431,8 @@ class SimpleTestCaseView(TemplateView):  # pylint: disable=missing-permission-re
             'components': case.component.only('name'),
             'tags': case.tag.only('name'),
             'case_comments': get_comments(case),
+            'bugs': LinkReference.objects.filter(is_defect=True,
+                                                 execution__case=case)
         })
 
         return data
@@ -515,7 +467,6 @@ class TestCaseExecutionDetailPanelView(TemplateView):  # pylint: disable=missing
         execution_comments = get_comments(execution)
 
         execution_status = TestExecutionStatus.objects.values('pk', 'name').order_by('pk')
-        bugs = group_case_bugs(execution.case.get_bugs().order_by('bug_id'))
 
         data.update({
             'test_case': case,
@@ -526,60 +477,56 @@ class TestCaseExecutionDetailPanelView(TemplateView):  # pylint: disable=missing
             'execution_comments': execution_comments,
             'execution_logs': execution.history.all(),
             'execution_status': execution_status,
-            'grouped_case_bugs': bugs,
         })
 
         return data
 
 
-def get(request, case_id):
-    """Get the case content"""
-    # Get the case
-    try:
-        test_case = TestCase.objects.select_related(
-            'author', 'default_tester',
-            'category', 'category',
-            'priority', 'case_status').get(case_id=case_id)
-    except ObjectDoesNotExist:
-        raise Http404
+class TestCaseGetView(DetailView):  # pylint: disable=missing-permission-required
 
-    # Get the test executions
-    tcrs = test_case.case_run.select_related(
-        'run', 'tested_by',
-        'assignee', 'case',
-        'case', 'status').order_by('run__plan', 'run')
+    model = TestCase
+    template_name = 'testcases/get.html'
+    http_method_names = ['get']
+    response_class = ModifySettingsTemplateResponse
 
-    # Render the page
-    context_data = {
-        'test_case': test_case,
-        'executions': tcrs,
-    }
-
-    with modify_settings(
+    def render_to_response(self, context, **response_kwargs):
+        self.response_class.modify_settings = modify_settings(
             MENU_ITEMS={'append': [
                 ('...', [
                     (
                         _('Edit'),
-                        reverse('testcases-edit', args=[test_case.pk])
+                        reverse('testcases-edit', args=[self.object.pk])
                     ),
                     (
                         _('Clone'),
-                        reverse('testcases-clone') + "?case=%d" % test_case.pk
+                        reverse('testcases-clone') + "?case=%d" % self.object.pk
                     ),
                     (
                         _('History'),
-                        "/admin/testcases/testcase/%d/history/" % test_case.pk
+                        "/admin/testcases/testcase/%d/history/" % self.object.pk
                     ),
                     ('-', '-'),
                     (
                         _('Delete'),
-                        reverse('admin:testcases_testcase_delete', args=[test_case.pk])
-                    )])]}):
-        return render(request, 'testcases/get.html', context_data)
+                        reverse('admin:testcases_testcase_delete', args=[self.object.pk])
+                    )])]}
+        )
+        return super().render_to_response(context, **response_kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        test_case_runs = self.object.case_run.select_related(
+            'run', 'tested_by',
+            'assignee', 'case',
+            'status').order_by('run__plan', 'run')
+
+        context['executions'] = test_case_runs
+        return context
 
 
 @require_POST
-def printable(request, template_name='case/printable.html'):
+def printable(request,  # pylint: disable=missing-permission-required
+              template_name='case/printable.html'):
     """
         Create the printable copy for plan/case.
         Only CONFIRMED TestCases are printed when printing a TestPlan!
@@ -617,141 +564,64 @@ def printable(request, template_name='case/printable.html'):
     return render(request, template_name, context_data)
 
 
-def update_testcase(request, test_case, tc_form):
-    """Updating information of specific TestCase
+@method_decorator(permission_required('testcases.change_testcase'), name='dispatch')
+class EditTestCaseView(UpdateView):
 
-    This is called by views.edit internally. Don't call this directly.
+    model = TestCase
+    template_name = 'testcases/mutable.html'
+    form_class = TestCaseForm
 
-    Arguments:
-    - test_case: instance of a TestCase being updated
-    - tc_form: instance of django.forms.Form, holding validated data.
-    """
+    def form_valid(self, form):
+        notify_formset = CaseNotifyFormSet(self.request.POST, instance=self.object)
+        if notify_formset.is_valid():
+            notify_formset.save()
+            return super().form_valid(form)
 
-    # TODO: this entire function doesn't seem very useful
-    # part if it was logging the changes but now this is
-    # done by simple_history. Should we remove it ???
-    # Modify the contents
-    fields = ['summary',
-              'case_status',
-              'category',
-              'priority',
-              'notes',
-              'text',
-              'is_automated',
-              'script',
-              'arguments',
-              'extra_link',
-              'requirement']
+        # taken from FormMixin.form_invalid()
+        return self.render_to_response(self.get_context_data(notify_formset=notify_formset))
 
-    for field in fields:
-        if getattr(test_case, field) != tc_form.cleaned_data[field]:
-            setattr(test_case, field, tc_form.cleaned_data[field])
-    try:
-        if test_case.default_tester != tc_form.cleaned_data['default_tester']:
-            test_case.default_tester = tc_form.cleaned_data['default_tester']
-    except ObjectDoesNotExist:
-        pass
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['notify_formset'] = kwargs.get('notify_formset') or \
+            CaseNotifyFormSet(instance=self.object)
+        return context
 
-    test_case.save()
-
-
-@permission_required('testcases.change_testcase')
-def edit(request, case_id):
-    """Edit case detail"""
-    try:
-        test_case = TestCase.objects.select_related().get(case_id=case_id)
-    except ObjectDoesNotExist:
-        raise Http404
-
-    test_plan = plan_from_request_or_none(request)
-
-    if request.method == "POST":
-        form = NewCaseForm(request.POST)
-        if request.POST.get('product'):
-            form.populate(product_id=request.POST['product'])
-        elif test_plan:
-            form.populate(product_id=test_plan.product_id)
+    def get_form(self, form_class=None):
+        form = super().get_form()
+        if self.request.POST.get('product'):
+            form.populate(product_id=self.request.POST['product'])
         else:
-            form.populate()
+            form.populate(product_id=self.object.category.product_id)
+        return form
 
-        n_form = CaseNotifyForm(request.POST)
-
-        if form.is_valid() and n_form.is_valid():
-            update_testcase(request, test_case, form)
-            update_case_email_settings(test_case, n_form)
-
-            return HttpResponseRedirect(
-                reverse('testcases-get', args=[case_id, ])
-            )
-
-    else:
-        # Notification form initial
-        n_form = CaseNotifyForm(initial={
-            'notify_on_case_update': test_case.emailing.notify_on_case_update,
-            'notify_on_case_delete': test_case.emailing.notify_on_case_delete,
-            'author': test_case.emailing.auto_to_case_author,
-            'default_tester_of_case': test_case.emailing.auto_to_case_tester,
-            'managers_of_runs': test_case.emailing.auto_to_run_manager,
-            'default_testers_of_runs': test_case.emailing.auto_to_run_tester,
-            'assignees_of_case_runs': test_case.emailing.auto_to_case_run_assignee,
-            'cc_list': MultipleEmailField.delimiter.join(
-                test_case.emailing.get_cc_list()),
-        })
-
-        components = []
-        for component in test_case.component.all():
-            components.append(component.pk)
-
+    def get_initial(self):
         default_tester = None
-        if test_case.default_tester_id:
-            default_tester = test_case.default_tester.email
+        if self.object.default_tester_id:
+            default_tester = self.object.default_tester.email
 
-        form = NewCaseForm(initial={
-            'summary': test_case.summary,
-            'default_tester': default_tester,
-            'requirement': test_case.requirement,
-            'is_automated': test_case.is_automated,
-            'script': test_case.script,
-            'arguments': test_case.arguments,
-            'extra_link': test_case.extra_link,
-            'case_status': test_case.case_status_id,
-            'priority': test_case.priority_id,
-            'product': test_case.category.product_id,
-            'category': test_case.category_id,
-            'notes': test_case.notes,
-            'text': test_case.text,
-        })
-
-        form.populate(product_id=test_case.category.product_id)
-
-    context_data = {
-        'test_case': test_case,
-        'test_plan': test_plan,
-        'form': form,
-        'notify_form': n_form,
-    }
-    return render(request, 'testcases/mutable.html', context_data)
+        return {
+            'product': self.object.category.product_id,
+            'default_tester': default_tester
+        }
 
 
-@permission_required('testcases.add_testcase')
-def clone(request, template_name='testcases/clone.html'):
+@method_decorator(permission_required('testcases.add_testcase'), name='dispatch')
+class CloneTestCaseView(View):
     """Clone one case or multiple case into other plan or plans"""
 
-    request_data = getattr(request, request.method)
+    template_name = 'testcases/clone.html'
+    http_method_names = ['get', 'post']
 
-    if 'case' not in request_data:
-        messages.add_message(request,
-                             messages.ERROR,
-                             _('At least one TestCase is required'))
-        # redirect back where we came from
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    def post(self, request):
+        if not self._is_request_data_valid(request):
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-    # Do the clone action
-    if request.method == 'POST':
+        # Do the clone action
         clone_form = CloneCaseForm(request.POST)
         clone_form.populate(case_ids=request.POST.getlist('case'))
 
         if clone_form.is_valid():
+            test_plan = None
             tcs_src = clone_form.cleaned_data['case']
             for tc_src in tcs_src:
                 tc_dest = TestCase.objects.create(
@@ -812,9 +682,6 @@ def clone(request, template_name='testcases/clone.html'):
             cases_count = len(clone_form.cleaned_data['case'])
             plans_count = len(clone_form.cleaned_data['plan'])
 
-            if cases_count == 1 and plans_count == 1:
-                return HttpResponseRedirect(reverse('testcases-get', args=[tc_dest.pk, ]))
-
             if cases_count == 1:
                 return HttpResponseRedirect(
                     reverse('testcases-get', args=[tc_dest.pk, ])
@@ -830,7 +697,11 @@ def clone(request, template_name='testcases/clone.html'):
                                  messages.SUCCESS,
                                  _('TestCase cloning was successful'))
             return HttpResponseRedirect(reverse('plans-search'))
-    else:
+
+    def get(self, request):
+        if not self._is_request_data_valid(request):
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
         selected_cases = get_selected_testcases(request)
         # Initial the clone case form
         clone_form = CloneCaseForm(initial={
@@ -838,7 +709,19 @@ def clone(request, template_name='testcases/clone.html'):
         })
         clone_form.populate(case_ids=selected_cases)
 
-    context = {
-        'form': clone_form,
-    }
-    return render(request, template_name, context)
+        context = {
+            'form': clone_form,
+        }
+        return render(request, self.template_name, context)
+
+    @staticmethod
+    def _is_request_data_valid(request):
+        request_data = getattr(request, request.method)
+
+        if 'case' not in request_data:
+            messages.add_message(request,
+                                 messages.ERROR,
+                                 _('At least one TestCase is required'))
+            return False
+
+        return True

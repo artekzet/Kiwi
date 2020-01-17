@@ -1,7 +1,6 @@
 {% load i18n %}
 <form id="id_form_case_runs">
 <div class="mixbar">
-    <span class="tit" style='float:left'>{% trans "Cases" %}: {{ executions_count }}</span>
 	<ul class="btnBlue btnBlueFilter" id="showFilterBtn">
 		<li class="btnBlueL"></li>
                 <li class="btnBlueC"><a title="Click to show filter case-run options" id='filter_case_run'>{% trans "Show filter options" %}</a></li>
@@ -13,7 +12,7 @@
 		<input id="id_check_box_highlight" type="checkbox" />
                 <label for="id_check_box_highlight" title="Highlight my assigned runs">{% trans "Highlight" %}</label>
 	</div>
-	<div>
+	<div class="paddingLeft">
 		<div class="btnBlueCaserun">
 			<span>Cases</span>
 			<ul>
@@ -34,19 +33,12 @@
 		<div class="btnBlueCaserun">
                     <span>{% trans "Status" %}</span>
 			{% if perms.testruns.change_testexecution %}
-				<ul class="statusOptions">
-					{% for tcrs in test_status %}
-					<li><a value="{{ tcrs.pk }}" href="#" class="{{ tcrs|lower }}Blue9">{{ tcrs }}</a></li>
+				<ul class="statusOptions" style="width: auto; white-space: nowrap">
+					{% for execution_status in test_status %}
+					<li><a style="padding-left: 0" value="{{ execution_status.pk }}" href="#"><i class="{{execution_status.icon}}" style="color: {{execution_status.color}}"></i> {{ execution_status.name }}</a></li>
 					{% endfor %}
 				</ul>
 			{% endif %}
-		</div>
-		<div class="btnBlueCaserun">
-                    <span>{% trans "Bugs" %}</span>
-			<ul>
-                            <li><a href="javascript:void(0);" class="addBlue9 js-add-bugs">{% trans "Add" %}</a></li>
-                            <li><a href="javascript:void(0);" class="removeBlue9 js-remove-bugs">{% trans "Remove" %}</a></li>
-			</ul>
 		</div>
 		<div class="btnBlueCaserun">
                     <span>{% trans "Comment" %}</span>
@@ -56,6 +48,14 @@
                             {% endif %}
 			</ul>
 		</div>
+                <div class="btnBlueCaserun">
+                    <span>{% trans "Hyperlink" %}</span>
+                        <ul>
+                            {% if perms.linkreference.add_linkreference %}
+                            <li><a href="#" class="addBlue9 js-add-links">{% trans "Add" %}</a></li>
+                            {% endif %}
+                        </ul>
+                </div>
 	</div>
 	<div class="clear"></div>
 </div>
@@ -88,8 +88,7 @@
 		<div class="rightlistinfo">
 			<div class="listinfo">
                             <span class="title"><label for="id_bug">{% trans "Bug" %}&nbsp;:</label></span>
-				<input id="id_bug" type="text" name="case_run_bug__bug_id__in" value="{{ REQUEST_CONTENTS.case_run_bug__bug_id__in }}" />
-                                <span class='grey'>{% trans "You can type multiple bugs by comma." %}</span>
+				<input id="id_bug" type="text" name="linkreference__url__icontains" value="{{ REQUEST_CONTENTS.case_run_bug__bug_id__in }}" />
 			</div>
 			<div class="listinfo">
                             <span class="title"><label for="id_status">{% trans "Status" %}&nbsp;:</label></span>
@@ -135,21 +134,28 @@
 
 {% include "run/table_executions.html" %}
 
-<div id="addlink_dialog" title="Add Test Link">
-    <p>{% trans "All these fields are required." %}</p>
-	<form>
-		<fieldset style="padding:0; border:0; margin-top:25px;">
-                    <label for="testlog_name" style="display:block">{% trans "Name" %} <span style="color:red">*</span> ({% trans "64 characters at most" %})</label>
-			<input type="text" id="testlog_name" name="testlog_name" size="64"
-				class="text ui-widget-content ui-corner-all"
-				style="margin-bottom:12px; width:95%; padding: .4em; display:block"/>
-                        <label for="testlog_url" style="display:block">{% trans "URL" %} <span style="color:red">*</span></label>
-			<textarea id="testlog_url" name="testlog_url" rows="3"
-				class="text ui-widget-content ui-corner-all"
-				style="width:95%; display:block"></textarea>
-		</fieldset>
-	</form>
+<div id="addlink_dialog" title="Add hyperlink">
+    <form>
+        <fieldset>
+            <label for="testlog_url">{% trans "URL" %} <span style="color:red">*</span></label>
+            <input type="text" id="testlog_url" name="testlog_url" style="width: 95%"/>
+            <div class="case_run_add_link">
+                <div>
+                    <input type="checkbox" id="is_defect" name="is_defect" />
+                    <label for="is_defect">{% trans "URL points to a defect" %}</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="update_tracker" name="update_tracker" />
+                    <label for="update_tracker">{% trans "Auto-update Issue Tracker" %}</label>
+                </div>
+            </div>
+            <br/>
+            <label for="testlog_name">{% trans "Name" %}</label>
+            <input type="text" id="testlog_name" name="testlog_name" style="width: 95%"/>
+        </fieldset>
+    </form>
 </div>
+
 	<script id="add_issue_form_template" type="text/x-handlebars-template">
 {% verbatim %}
 	<h4>{{ action_button_text }} bug</h4>
@@ -162,27 +168,11 @@
 			<div class="bug_type" id="id_bug_type">Issue Tracker</div>
 			<select name="bug_system_id" id="bug_system_id">
 			{% for btr in bug_trackers %}
-				<option value="{{ btr.pk }}" data-validation-regexp="{{ btr.validate_reg_exp }}">{{ btr.name }}</option>
+				<option value="{{ btr.pk }}">{{ btr.name }}</option>
 			{% endfor %}
 			</select>
 			</br>
 {% verbatim %}
-                    {{#if show_bug_id_field}}
-			<div id="bug-system" style="line-height:30px;">
-                                <div class="bug_id">
-{% endverbatim %}{% trans "Bug ID" %}{% verbatim %}
-                                </div>
-				<input type="text" name="bug_id">
-                            {{#if show_add_to_bugzilla_checkbox}}
-				</br>
-				<input type="checkbox" name="bz_external_track" value="bz_external_track">&nbsp;
-                                <span class="use_bz_external_track">
-{% endverbatim %}{% trans "Check to add Test Case(s) to Issue Tracker" %}{% verbatim %}
-                                </span>
-                            {{/if}}
-			</div>
-			</br></br>
-                    {{/if}}
 			<div>
 				<input type="submit" value="{{ action_button_text }}">
 {% endverbatim %}

@@ -51,7 +51,6 @@ var default_messages = {
     'ajax_failure': 'Communication with server got some unknown errors.',
     'tree_reloaded': 'The tree has been reloaded.',
     'last_case_run': 'It is the last case run',
-    'invalid_bug_id': 'Please input a valid bug id!',
     'no_bugs_specified': 'Please specify bug ID',
   },
   'confirm': {
@@ -282,49 +281,6 @@ function removeTag(container, params) {
     });
 }
 
-function removeComment(form, callback) {
-  var url = form.action;
-  var method = form.method;
-  var parameters = Nitrate.Utils.formSerialize(form);
-
-  jQ.ajax({
-    'url': url,
-    'type': method,
-    'data': parameters,
-    'success': function (data, textStatus, jqXHR) {
-      updateCommentsCount(parameters['object_pk'], false);
-      callback(jqXHR);
-    },
-    'error': function (jqXHR, textStatus, errorThrown) {
-      json_failure(jqXHR);
-    }
-  });
-}
-
-
-function submitComment(container, parameters, callback) {
-  var complete = function(t) {
-    updateCommentsCount(parameters['case_id'], true);
-    if (callback) {
-      callback();
-    }
-  };
-
-  jQ(container).html('<div class="ajax_loading"></div>');
-
-  var url = '/comments/post/';
-  jQ.ajax({
-    'url': url,
-    'type': 'POST',
-    'data': parameters,
-    'success': function (data, textStatus, jqXHR) {
-      jQ(container).html(data);
-    },
-    'complete': function () {
-      complete();
-    }
-  });
-}
 
 function updateCommentsCount(caseId, increase) {
   var commentDiv = jQ("#"+caseId+"_case_comment_count");
@@ -466,25 +422,4 @@ function printableCases(url, form, table) {
   // replace with selected cases' IDs
   params.case = selection.selectedCasesIds;
   postToURL(url, params);
-}
-
-function validateIssueID(bugRegExp, bugId) {
-  // if bugRegExp is empty string then all input is valid!
-  if (!bugRegExp) {
-    return true;
-  }
-
-  try {
-    var bug_re = new RegExp(bugRegExp);
-  // catch syntax errors in regular expressions
-  } catch(err) {
-    window.alert(err.name + ': ' + err.message);
-    return false;
-  }
-  var result = bug_re.test(bugId);
-
-  if (!result) {
-    window.alert(default_messages.alert.invalid_bug_id);
-  }
-  return result;
 }

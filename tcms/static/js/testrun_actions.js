@@ -69,10 +69,6 @@ Nitrate.TestRuns.Details.on_load = function() {
       c_container.parent().find('.update_form')
         .unbind('submit').bind('submit', updateCaseRunStatus);
 
-      // Observe the delete comment form
-      var refresh_case = function(t) {
-        constructCaseRunZone(c_container[0], c[0], case_id);
-      };
 
       var rc_callback = function(e) {
         e.stopPropagation();
@@ -80,7 +76,11 @@ Nitrate.TestRuns.Details.on_load = function() {
         if (!window.confirm(default_messages.confirm.remove_comment)) {
           return false;
         }
-        removeComment(this, refresh_case);
+
+        const comment_id = $(this).find('input[name=comment_id]').val();
+        jsonRPC('TestExecution.remove_comment', [case_run_id, comment_id], function(data) {
+            constructCaseRunZone(c_container[0], c[0], case_id);
+        });
       };
       c_container.parent().find('.form_comment')
         .unbind('submit').bind('submit', rc_callback);
@@ -97,20 +97,15 @@ Nitrate.TestRuns.Details.on_load = function() {
         var params = jQ(this).data('params');
         fileCaseRunBug(params[0], c[0], c_container[0], params[1], params[2]);
       });
-      c_container.find('.js-add-caserun-bug').bind('click', function(){
-        var params = jQ(this).data('params');
-        addCaseRunBug(params[0], c[0], c_container[0], params[1], params[2]);
-      });
-      c_container.find('.js-remove-caserun-bug').bind('click', function(){
-        var params = jQ(this).data('params');
-        removeCaseBug(params[1], params[2], params[3]);
-      });
       c_container.find('.js-add-testlog').bind('click', function(){
         var params = jQ(this).data('params');
-        addLinkToCaseRun(this, params[0], params[1]);
+        addLinkToTestExecution(this, params[0], [params[1]]);
       });
       c_container.find('.js-remove-testlog').bind('click', function(){
-        removeLink(this, window.parseInt(jQ(this).data('param')));
+        var button = this;
+        jsonRPC('TestExecution.remove_link', [{pk: $(button).data('param')}], function(result) {
+            button.parentNode.parentNode.remove();
+        });
       });
     };
 
@@ -162,8 +157,8 @@ Nitrate.TestRuns.Details.on_load = function() {
     var errorCaseRunCount = window.parseInt(jQ('span#ERROR a').text()) || 0;
     var failedCaseRunCount = window.parseInt(jQ('span#FAILED a').text()) || 0;
     var waivedCaseRunCount = window.parseInt(jQ('span#WAIVED a').text()) || 0;
-    var completePercent = 100 * ((passedCaseRunCount + errorCaseRunCount + failedCaseRunCount
-      + waivedCaseRunCount) / caseRunCount).toFixed(2);
+    var completePercent = Math.round(100 * ((passedCaseRunCount + errorCaseRunCount + failedCaseRunCount
+      + waivedCaseRunCount) / caseRunCount));
     var failedPercent = 100 * ((errorCaseRunCount + failedCaseRunCount) / (passedCaseRunCount
       + errorCaseRunCount + failedCaseRunCount + waivedCaseRunCount)).toFixed(2);
 
@@ -198,15 +193,14 @@ Nitrate.TestRuns.Details.on_load = function() {
   jQ('.js-change-assignee').bind('click', function() {
     changeCaseRunAssignee();
   });
-  jQ('.js-add-bugs').bind('click', function() {
-    updateBugs('add');
-  });
-  jQ('.js-remove-bugs').bind('click', function() {
-    updateBugs('remove');
-  });
   jQ('.js-show-commentdialog').bind('click', function() {
     showCommentForm();
   });
+
+    $('.js-add-links').bind('click', function() {
+        bulkAddLinkToTestExecution();
+    });
+
   jQ('.js-add-cc').bind('click', function() {
     addRunCC(jQ(this).data('param'), jQ('.js-cc-ul')[0]);
   });
@@ -279,16 +273,17 @@ var updateCaseRunStatus = function(e) {
   // Callback when
   var callback = function(t) {
     // Update the contents
-    if (parameters['value'] != '') {
+    const value = parameters['value']
+    if (value != '') {
       // Update the case run status icon
       var crs = Nitrate.TestRuns.CaseRunStatus;
-      title.find('.icon_status').each(function(index) {
+      title.find('.execution_status_icon').each(function(index) {
         for (i in crs) {
-          if (typeof crs[i] === 'string' && jQ(this).is('.btn_' + crs[i])) {
-            jQ(this).removeClass('btn_' + crs[i]);
-          }
+          jQ(this).removeClass(crs[i].icon);
         }
-        jQ(this).addClass('btn_' + Nitrate.TestRuns.CaseRunStatus[value - 1]);
+        const execution = Nitrate.TestRuns.CaseRunStatus.find(tcs => tcs.pk === value);
+        jQ(this).addClass(execution.icon);
+        jQ(this).css('color', execution.color)
       });
 
       // Update related people
@@ -325,10 +320,17 @@ var updateCaseRunStatus = function(e) {
     ajax_loading.id = 'id_loading_' + parameters['case_id'];
     container.html(ajax_loading);
     var c = jQ('<div>');
+
     if (parameters['value'] != '') {
-      submitComment(c[0], parameters);
+        jsonRPC('TestExecution.add_comment', [object_pk, parameters['comment']], function(data){
+            updateCommentsCount(parameters['case_id'], true);
+        });
     } else {
-      submitComment(c[0], parameters, callback);
+        jsonRPC('TestExecution.add_comment', [object_pk, parameters['comment']], function(data){
+            updateCommentsCount(parameters['case_id'], true);
+            callback();
+        });
+
     }
   }
 
@@ -394,12 +396,6 @@ function AddIssueDialog(options) {
   if (this.a === undefined) {
     this.a = this.action.toLowerCase();
   }
-
-  if (options.hasOwnProperty("show_bug_id_field")) {
-    this.show_bug_id_field = options.show_bug_id_field;
-  } else {
-    this.show_bug_id_field = false;
-  }
 }
 
 
@@ -420,8 +416,6 @@ AddIssueDialog.prototype.show = function () {
   var context = {
     'hiddenFields': hiddenPart,
     'action_button_text': this.action,
-    'show_bug_id_field': this.show_bug_id_field || this.action === 'Add',
-    'show_add_to_bugzilla_checkbox': this.action === 'Add',
     'a': this.a,
   };
 
@@ -446,8 +440,6 @@ AddIssueDialog.prototype.show = function () {
 
 AddIssueDialog.prototype.get_data = function () {
   var form_data = Nitrate.Utils.formSerialize(this.form);
-  form_data.bug_validation_regexp = $('#bug_system_id option:selected').data('validation-regexp');
-  form_data.bz_external_track = $('input[name=bz_external_track]').is(':checked');
   return form_data;
 };
 
@@ -477,49 +469,18 @@ function fileCaseRunBug(run_id, title_container, container, case_id, case_run_id
   dialog.show();
 }
 
-function addCaseRunBug(run_id, title_container, container, case_id, case_run_id) {
-  var dialog = new AddIssueDialog({
-    'onSubmit': function (e, dialog) {
-      e.stopPropagation();
-      e.preventDefault();
-
-      form_data = dialog.get_data();
-
-      form_data.bug_id = form_data.bug_id.trim();
-      if (!form_data.bug_id.length) {
-        return;
-      }
-
-        jsonRPC('Bug.create', [{
-                case_id: case_id,
-                case_run_id: case_run_id,
-                bug_id: form_data.bug_id,
-                bug_system_id: form_data.bug_system_id
-            }, form_data.bz_external_track],
-            function(result) {
-                // todo: missing error handling when bz_external_track is true
-                $('#dialog').hide();
-
-                // Update bugs count associated with just updated case run
-                var jqCaserunBugCount = $('span#' + case_run_id + '_case_bug_count');
-                jqCaserunBugCount.addClass('have_bug');
-
-                // refresh the links of bugs
-                constructCaseRunZone(container, title_container, case_id);
-        });
-    }
-  });
-
-  dialog.show();
-}
-
 
 function delCaseRun(run_id) {
-  var caseruns = serializeCaseRunFromInputList('id_table_cases', 'case_run');
-  var numCaseRuns = caseruns.case_run.length;
-  if (window.confirm('You are about to delete ' + numCaseRuns + ' case run(s). Are you sure?')) {
-    postToURL('remove_execution/', caseruns);
-  }
+    if (window.confirm('Are you sure?')) {
+        const executions = $('#id_table_cases').find('input[name="case_run"]:checked');
+
+        executions.each(function() {
+            var case_id = this.getAttribute('data-case_id');
+            jsonRPC('TestRun.remove_case', [run_id, Number(case_id)], function () {
+                $(this).closest('tr').remove();
+            }.bind(this));
+        });
+    }
 }
 
 
@@ -665,112 +626,9 @@ function serializeCaseRunFromInputList(table, name) {
   return returnobj_list;
 }
 
-function serialzeCaseForm(form, table, serialized) {
-  if (typeof serialized !== 'boolean') {
-    var serialized = true;
-  }
-  var data;
-  if (serialized) {
-    data = Nitrate.Utils.formSerialize(form);
-  } else {
-    data = jQ(form).serialize();
-  }
-
-  data['case_run'] = serializeCaseFromInputList(table);
-  return data;
-}
-
 function showCaseRunsWithSelectedStatus(form, status_id) {
   form.status__pk.value = status_id;
   fireEvent(jQ(form).find('input[type="submit"]')[0], 'click');
-}
-
-function updateBugsActionAdd(case_runs) {
-  var dialog = new AddIssueDialog({
-    'extraFormHiddenData': { 'case_runs': case_runs.join() },
-    'onSubmit': function(e, dialog) {
-      e.stopPropagation();
-      e.preventDefault();
-      var form_data = dialog.get_data();
-      form_data.bug_id = form_data.bug_id.trim();
-
-      if (!form_data.bug_id.length) {
-        return;
-      }
-
-      if (!validateIssueID(form_data.bug_validation_regexp, form_data.bug_id)) {
-        return false;
-      }
-
-      jQ.ajax({
-        url: '/caserun/update-bugs-for-many/',
-        dataType: 'json',
-        data: form_data,
-        success: function(res){
-          if (res.rc === 0) {
-            reloadWindow();
-          } else {
-            window.alert(res.response);
-            return false;
-          }
-        }
-      });
-    }
-  });
-  dialog.show();
-}
-
-function updateBugsActionRemove(case_runs) {
-  var dialog = new AddIssueDialog({
-    'action': 'Remove',
-    'show_bug_id_field': true,
-    'extraFormHiddenData': { 'case_runs': case_runs.join() },
-    'onSubmit': function(e, dialog) {
-      e.stopPropagation();
-      e.preventDefault();
-      var form_data = dialog.get_data();
-      form_data.bug_id = form_data.bug_id.trim();
-
-      if (!form_data.bug_id.length) {
-        return;
-      }
-
-      if (!validateIssueID(form_data.bug_validation_regexp, form_data.bug_id)) {
-        return false;
-      }
-
-      jQ.ajax({
-        url: '/caserun/update-bugs-for-many/',
-        dataType: 'json',
-        success: function(res) {
-          if (res.rc == 0) {
-            reloadWindow();
-          } else {
-            window.alert(res.response);
-            return false;
-          }
-        },
-        data: form_data,
-      });
-    }
-  });
-  dialog.show();
-}
-
-function updateBugs(action) {
-  var runs = serializeCaseRunFromInputList(jQ('#id_table_cases')[0]);
-  if (!runs.length) {
-    window.alert(default_messages.alert.no_case_selected);
-    return false;
-  }
-
-  if (action === "add") {
-    updateBugsActionAdd(runs);
-  } else if (action === "remove") {
-    updateBugsActionRemove(runs);
-  } else {
-    throw new Error("Unknown operation when update case runs' bugs. This should not happen.");
-  }
 }
 
 function showCommentForm() {
@@ -785,29 +643,17 @@ function showCommentForm() {
   var commentText = jQ('#commentText');
   var commentsErr = jQ('#commentsErr');
   jQ('#btnComment').live('click', function() {
-    var error;
     var comments = jQ.trim(commentText.val());
     if (!comments) {
-      error = 'No comments given.';
-    }
-    if (error) {
-      commentsErr.html(error);
+      commentsErr.html('No comments given');
       return false;
     }
-    jQ.ajax({
-      url: '/caserun/comment-many/',
-      data: {'comment': comments, 'run': runs.join()},
-      dataType: 'json',
-      type: 'post',
-      success: function(res) {
-        if (res.rc == 0) {
-          reloadWindow();
-        } else {
-          commentsErr.html(res.response);
-          return false;
-        }
-      }
+
+    runs.forEach(function(run_id) {
+        jsonRPC('TestExecution.add_comment', [run_id, comments], function(result){}, true);
     });
+
+    reloadWindow();
   });
   jQ('#btnCancelComment').live('click', function(){
     jQ(dialog).hide();
@@ -839,52 +685,34 @@ jQ(document).ready(function(){
   });
 });
 
-function get_addlink_dialog() {
-  return jQ('#addlink_dialog');
-}
 
-/*
- * Do AJAX request to backend to remove a link
- *
- * - sender:
- * - link_id: the ID of an arbitrary link.
- */
-function removeLink(sender, link_id) {
-  jQ.ajax({
-    url: '/linkref/remove/' + link_id + '/',
-    type: 'GET',
-    dataType: 'json',
-    success: function(data, textStatus, jqXHR) {
-      if (data.rc !== 0) {
-        window.alert(data.response);
-        return false;
-      }
-      var li_node = sender.parentNode;
-      li_node.parentNode.removeChild(li_node);
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-      var data = JSON.parse(jqXHR.responseText);
-      window.alert(data.message);
+function bulkAddLinkToTestExecution() {
+    var execution_ids = serializeCaseRunFromInputList(jQ('#id_table_cases')[0]);
+    if (!execution_ids.length) {
+        return window.alert(default_messages.alert.no_case_selected);
     }
-  });
+
+    addLinkToTestExecution(null, null, execution_ids);
 }
 
 /*
- * Add link to case run
- *
  * - sender: the Add link button, which is pressed to fire this event.
- * - target_id: to which TestExecution the new link will be linked.
+ * - case_id: used for reloading TE details. In case of bulk actions this
+ *            is null/undefined and the entire page is reloaded!
+ * - execution_ids: Array of TestExecution IDs to which the new link will be added
  */
-function addLinkToCaseRun(sender, case_id, case_run_id) {
-  var dialog_p = get_addlink_dialog();
+function addLinkToTestExecution(sender, case_id, execution_ids) {
+  var dialog_p = jQ('#addlink_dialog');
 
-  dialog_p.dialog('option', 'target_id', case_run_id);
-  // These two options are used for reloading TestExecution when successfully.
-  var container = jQ(sender).parents('.case_content.hide')[0];
-  dialog_p.dialog('option', 'container', container);
-  var title_container = jQ(container).prev()[0];
-  dialog_p.dialog('option', 'title_container', title_container);
+  dialog_p.dialog('option', 'target_id', execution_ids);
   dialog_p.dialog('option', 'case_id', case_id);
+  if (case_id) {
+      // These two options are used for reloading TestExecution when successfully.
+      var container = jQ(sender).parents('.case_content.hide')[0];
+      dialog_p.dialog('option', 'container', container);
+      var title_container = jQ(container).prev()[0];
+      dialog_p.dialog('option', 'title_container', title_container);
+  }
   dialog_p.dialog('open');
 }
 
@@ -893,7 +721,7 @@ function addLinkToCaseRun(sender, case_id, case_run_id) {
  * to an arbitrary instance of TestExecution
  */
 function initialize_addlink_dialog() {
-  var dialog_p = get_addlink_dialog();
+  var dialog_p = jQ('#addlink_dialog');
 
   dialog_p.dialog({
     autoOpen: false,
@@ -910,34 +738,44 @@ function initialize_addlink_dialog() {
     },
     buttons: {
       "OK": function() {
-        // TODO: validate name and url
-        var name = jQ('#testlog_name').attr('value');
-        var url = jQ('#testlog_url').attr('value');
-        var target_id = jQ(this).dialog('option', 'target_id');
+        var name = jQ('#testlog_name').attr('value'),
+            url = jQ('#testlog_url').attr('value'),
+            is_defect = $('#is_defect').is(':checked'),
+            update_tracker = $('#update_tracker').is(':checked'),
+            case_id = dialog_p.dialog('option', 'case_id');
 
-        jQ.ajax({
-          url: '/linkref/add/',
-          type: 'POST',
-          data: { name: name, url: url, target_id: target_id },
-          dataType: 'json',
-          success: function(data, textStatus, jqXHR) {
-            if (data.rc !== 0) {
-              window.alert(data.response);
-              return false;
-            }
-            dialog_p.dialog('close');
+        //check if url is valid
+        if (url.length === 0 || url.indexOf('://') === -1) {
+            return;
+        }
 
-            // Begin to construct case run area
-            var container = dialog_p.dialog('option', 'container');
-            var title_container = dialog_p.dialog('option', 'title_container');
-            var case_id = dialog_p.dialog('option', 'case_id');
-            constructCaseRunZone(container, title_container, case_id);
-          },
-          error: function (jqXHR, textStatus, errorThrown) {
-            var data = JSON.parse(jqXHR.responseText);
-            window.alert(data.response);
-          }
+        dialog_p.dialog('close');
+
+        jQ(this).dialog('option', 'target_id').forEach(function(target_id) {
+            jsonRPC('TestExecution.add_link', [{
+                        execution_id: target_id,
+                        name: name,
+                        url: url,
+                        is_defect: is_defect
+                    }, update_tracker], function(result) {
+                // when bulk adding links case_id will be undefined/null
+                if (case_id) {
+                    if (is_defect) {
+                        $('span#' + target_id + '_case_bug_count').addClass('have_bug');
+                    }
+
+                    // Begin to construct case run area
+                    var container = dialog_p.dialog('option', 'container');
+                    var title_container = dialog_p.dialog('option', 'title_container');
+                    constructCaseRunZone(container, title_container, case_id);
+                }
+            });
         });
+
+        // reload entire page if adding in bulk
+        if (!case_id) {
+            window.location.reload(true);
+        }
       },
       "Cancel": function() {
         jQ(this).dialog('close');

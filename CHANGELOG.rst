@@ -1,6 +1,552 @@
 Change Log
 ==========
 
+Kiwi TCMS 7.3 (16 Jan 2020)
+---------------------------
+
+**IMPORTANT:** this is a critical security update for
+**CVE-2019-19844: Potential account hijack via password reset form!**
+
+Also migrates to Django 3.0 and includes several other improvement
+and bug-fixes!
+
+
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update Django from 2.2.8 to 3.0.2
+- Update python-gitlab from 1.13.0 to 1.15.0
+- Update pygithub from 1.44.1 to 1.45
+- Update django-grappelli from 2.13.2 to 2.13.3
+- Bump django-uuslug from 1.1.9 to 1.2.0
+- Bump django-attachments from 1.4.1 to 1.5
+- Bump django-vinaigrette from 1.2.0 to 2.0.1
+- Update marked to version 0.8.0
+- Update prismjs to version 1.19.0
+- Generalize existing ``kiwitcms.telemetry.plugins`` handling code by
+  renaming the entry point to ``kiwitcms.plugins``
+- Refactor views to class based (Svetlozar Stoyanov)
+- Teach Kiwi TCMS to automatically report bugs to GitHub when the user
+  selects such action. Fall back to opening a new browser window for
+  manually entering the bug if something goes wrong
+
+
+Database
+~~~~~~~~
+
+- When migrating from the older ``Bug`` model to ``LinkReference`` skip
+  bugs which are attached directly to test cases instead of test executions.
+  See `SO #59321756 <https://stackoverflow.com/questions/59321756/>`_
+- Remove ``AutoField.max_length`` because it is ignored by Django 3
+
+
+API
+~~~
+
+- ``TestCase.update()`` method now allows to update the ``author`` field. Fixes
+  `Issue #630 <https://github.com/kiwitcms/Kiwi/issues/630>`_
+
+
+Bug fixes
+~~~~~~~~~
+
+- Modify template pass ``object`` as ``test_plan``. Fixes
+  `Issue #1307 <https://github.com/kiwitcms/Kiwi/issues/1307>`_ (Ed Oswald S. Go)
+- Enable version selection in test plan search page. Fixes
+  `Issue #1276 <https://github.com/kiwitcms/Kiwi/issues/1276>`_
+- Apply percentage rounding for completed test executions. Fixes
+  `Issue #1230 <https://github.com/kiwitcms/Kiwi/issues/1230>`_
+- Fix a logical bug in conditional expression when deciding whether or not
+  reporting bugs to selected issue tracker is disabled
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Add code of conduct. Fixes #1185
+  `Issue #1185 <https://github.com/kiwitcms/Kiwi/issues/1185>`_ (Rosen Sasov)
+- Add test for ``KIWI_DONT_ENFORSE_HTTPS``. Closes
+  `Issue #1274 <https://github.com/kiwitcms/Kiwi/issues/1274>`_
+- Replace ``ugettext_lazy`` with ``gettext_lazy`` for Django 3
+- Remove ``BaseCaseSearchForm.bug_id`` field
+- Refactor testcase edit view to class-based
+- Happy New Year pylint
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `Chinese Simplified translation <https://crowdin.com/project/kiwitcms/zh-CN#>`_
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+- Updated `Vietnamese translation <https://crowdin.com/project/kiwitcms/vi#>`_
+
+
+
+Kiwi TCMS 7.2 (08 Dec 2019)
+---------------------------
+
+
+**IMPORTANT:** this is an improvement & bug fix release which includes
+new database migrations and API methods, internal refactoring and updated
+translations.
+
+
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Base docker image to new CentOS 8
+- Update Django from 2.2.6 to 2.2.8
+- Update django-contrib-comments from 1.9.1 to 1.9.2
+- Update django-grappelli from 2.13.1 to 2.13.2
+- Update django-modern-rpc from 0.11.1 to 0.12.0
+- Update django-simple-history from 2.7.3 to 2.8.0
+- Update mysqlclient from 1.4.4 to 1.4.6
+- Update pygithub from 1.44 to 1.44.1
+- Update python-gitlab from 1.12.1 to 1.13.0
+- Several documentation updates
+
+
+Database migrations
+~~~~~~~~~~~~~~~~~~~
+
+- Add new database fields ``weight``, ``icon`` and ``color`` to
+  ``TestExecutionStatus`` and adjust existing code to work with them.
+  This is a necessary step before allowing customization of test execution
+  statuses, see
+  `Issue #236 <https://github.com/kiwitcms/Kiwi/issues/236>`_
+
+
+API
+~~~
+
+- RPC method ``TestExecution.add_comment()`` now requires
+  ``django_comments.add_comment`` permission
+- Add new RPC method ``TestExecution.remove_comment()``
+- Add new RPC method ``TestCase.add_comment()``
+- Add new RPC method ``TestCase.remove_comment()``
+
+
+Bug fixes
+~~~~~~~~~
+
+- ``testplans.views.DeleteCasesView`` now requires ``testplans.change_testplan``
+  permission (Svetlomir Balevski)
+- ``testplans.views.ReorderCasesView`` now requires ``testplans.change_testplan``
+  permission (Svetlomir Balevski)
+- Fix counting bug in execution trends telemetry
+- Fix several telemetry queries to still show data in the corner case
+  where test cases have been deleted from a TestPlan but test runs
+  are still available
+- Fix broken bulk menu in TestRun page when (translated) status names
+  are too long
+- Automatically expand TestExecution comment history if there are comments
+  present. Fixes
+  `Issue #349 <https://github.com/kiwitcms/Kiwi/issues/349>`_ (Matt Porter)
+- Document timezone settings and show current server time in navbar. Fixes
+  `Issue #1206 <https://github.com/kiwitcms/Kiwi/issues/1206>`_
+- Check for permissions in HTML template. Closes
+  `Issue #961 <https://github.com/kiwitcms/Kiwi/issues/961>`_
+- Document bug tracker integration support. Fixes
+  `Issue #698 <https://github.com/kiwitcms/Kiwi/issues/698>`_
+- Delete comments when TestCase and TestExecution are removed. Closes
+  `Issue #1028 <https://github.com/kiwitcms/Kiwi/issues/1028>`_
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Pylint fixes (Mariyan Garvanski)
+- Use ``django.utils.timezone.now()`` instead of ``datetime.now()``. Closes
+  `Issue #545 <https://github.com/kiwitcms/Kiwi/issues/545>`_
+- Use JSON-RPC instead of backend views when working with comments. Resolves
+  `Issue #960 <https://github.com/kiwitcms/Kiwi/issues/960>`_
+- Remove ``tcms.core.contrib.comments`` module. Closes
+  `Issue #959 <https://github.com/kiwitcms/Kiwi/issues/959>`_
+- Remove ``label=`` attribute from form field. Fixes
+  `Issue #652 <https://github.com/kiwitcms/Kiwi/issues/652>`_
+- Move and rename XML-RPC forms. Resolves
+  `Issue #681 <https://github.com/kiwitcms/Kiwi/issues/681>`_
+- Convert ``testplans.views.DeleteCasesView`` to JSON-RPC
+- Refactor more views from function based to class based
+- Remove duplicate JavaScript
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `Bulgarian translation <https://crowdin.com/project/kiwitcms/bg#>`_
+- Updated `Chinese Traditional translation <https://crowdin.com/project/kiwitcms/zh-TW#>`_
+- Updated `French translation <https://crowdin.com/project/kiwitcms/fr#>`_
+
+
+
+Kiwi TCMS 7.1 (29 Oct 2019)
+---------------------------
+
+**IMPORTANT:** this is a small improvement update which includes
+database schema and API changes, several other improvements,
+internal refactoring and updated translations.
+
+
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update django from 2.2.5 to 2.2.6
+- Update python-gitlab from 1.11.0 to 1.12.1
+- Update pygithub from 1.43.8 to 1.44
+- Update psycopg2 from 2.8.3 to 2.8.4
+- Add help tooltips in all telemetry pages
+- Better styling for checkboxes in 'Add hyperlink' dialog,
+  part of TestRun page
+- Add hyperlink validation. Fixes
+  `Issue #1147 <https://github.com/kiwitcms/Kiwi/issues/1147>`_
+
+Database migrations
+~~~~~~~~~~~~~~~~~~~
+
+- Add ``bugs`` permissions to ``Tester`` group. Will make any difference
+  only if upgrading from existing installation
+
+
+API
+~~~
+
+- New method ``Bug.remove()``
+
+
+Bug fixes
+~~~~~~~~~
+
+- Always build with the latest versions of translations
+- Add 'Delete' menu item in Bugs page. Fixes
+  `Issue #1153 <https://github.com/kiwitcms/Kiwi/issues/1153>`_
+- When deleting hyperlink from TestExecution hide the actual UI
+  elements from the page
+- Fix failure to delete TCs when the number of TCs inside TP is greater
+  than 100. Fixes
+  `Issue #1149 <https://github.com/kiwitcms/Kiwi/issues/1149>`_ and
+  `Sentry KIWI-TCMS-8F <https://sentry.io/organizations/open-technologies-bulgaria-ltd/issues/1245504316/>`_
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Rename directory ``xmlrpc`` to ``rpc`` and pylint updates. Refs
+  `Issue #682 <https://github.com/kiwitcms/Kiwi/issues/682>`_
+  (Matej Aleksandrov, Sinergise)
+- Remove labels from form fields, Refs
+  `Issue #652 <https://github.com/kiwitcms/Kiwi/issues/652>`_ (Azmi YÜKSEL)
+- New base class for tests around permissions (Svetlomir Balevski)
+- New "blueprint" test case around permissions to make testing in this area more
+  robust
+- Refactor many views from function based to class based
+- Update stale tests in ``tcms/core/tests/`` and make sure they aren't ignored
+  by the test runner
+- Remove empty class ``XMLRPCBaseCaseForm``
+- Remove ``XMLRPCNewCaseForm``, duplicate of ``NewCaseForm``
+- Remove ``rpc.forms.UpdateCaseForm`` in favor of ``XMLRPCUpdateCaseForm``
+- Update only English sources with new strings as a temporary workaround b/c
+  Crowdin uses different formatting heuristics than gettext. This will minimize
+  the number of .po format changes
+- A few pylint fixes
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `Albanian translation <https://crowdin.com/project/kiwitcms/sq#>`_ - 97%
+- Updated `Bulgarian translation <https://crowdin.com/project/kiwitcms/bg#>`_ - 91%
+- Updated `Chinese Simplified <https://crowdin.com/project/kiwitcms/zh-CN#>`_ - 71%
+- Updated `Greek translation <https://crowdin.com/project/kiwitcms/el#>`_ - 44%
+- Updated `Italian translation <https://crowdin.com/project/kiwitcms/it#>`_ - 97%
+- Updated `Japanese translation <https://crowdin.com/project/kiwitcms/ja#>`_ - 0%
+- Updated `Macedonian translation <https://crowdin.com/project/kiwitcms/mk#>`_ - 11%
+- Updated `Russian translation <https://crowdin.com/project/kiwitcms/ru#>`_ - 97%
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_ - 100%
+- Updated `Spanish translation <https://crowdin.com/project/kiwitcms/es-ES#>`_ - 96%
+- Updated `Turkish translation <https://crowdin.com/project/kiwitcms/tr#>`_ - 97%
+
+
+
+Kiwi TCMS 7.0 (24 Sep 2019)
+---------------------------
+
+**IMPORTANT:** this is a major release which includes security updates,
+significant database schema and API changes, many improvements,
+removed functionality, bug fixes, substantial internal refactoring and
+several new languages.
+
+
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Security
+~~~~~~~~
+
+- API method ``BugSystem.filter()`` has been removed (now unused) but
+  it was possible to use this method to steal passwords or keys used for
+  Issue Tracker integration. This vulnerability could be exploited by
+  users logged into Kiwi TCMS and is classified as medium severity!
+  We advise you to change your integration API keys and passwords
+  immediately!
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update Django from 2.2.4 to 2.2.5
+- Update django-uuslug from 1.1.8 to 1.1.9
+- Update mysqlclient from 1.4.2.post1 to 1.4.4
+- Update python-bugzilla from 2.2.0 to 2.3.0
+- Update python-gitlab from 1.10.0 to 1.11.0
+- Update patternfly from 3.59.3 to 3.59.4
+- Reduce docker image size from 1.01 GB to 577 MB
+- Add TestCase Health telemetry
+- Add support for Redmine issue tracker. Fixes
+  `Issue #41 <https://github.com/kiwitcms/Kiwi/issues/41>`_ (Jesse C. Lin)
+- Add breathing room around HTML form's submit buttons (Rady Madjev)
+- New TestRun page action: bulk-add hyperlinks to TestExecution(s)
+- Make it possible to disable HTTPS by specifying the
+  ``KIWI_DONT_ENFORCE_HTTPS`` environment variable! Fixes
+  `Issue #1036 <https://github.com/kiwitcms/Kiwi/issues/1036>`_ (Marco Descher)
+- Documentation updates, including internal style checker. Fixes
+  `Issue #1000 <https://github.com/kiwitcms/Kiwi/issues/1000>`_ (Prome88)
+- When linking a TestExecution to a defect and choosing to update the
+  Issue Tracker Kiwi TCMS will not add a comment pointing back to
+  TR ID/summary/URL and TE ID/summary. This provides more detailed information
+  about the reproducer instead of just linking to a TestCase without any
+  specific execution details like we did in the past
+- Display additional defect information via Issue Tracker integration.
+  On Patternfly pages which show defect URLs this is accessible via a
+  small info icon. Fixes
+  `Issue #117 <https://github.com/kiwitcms/Kiwi/issues/117>`_
+- Add minimalistic defect tracker functionality. Fixes
+  `Issue #699 <https://github.com/kiwitcms/Kiwi/issues/699>`_
+
+  - integrated with Issue Tracker integration layer as if it was
+    an external system
+  - when adding hyperlink to TestExecition (also via API method
+    ``TestExecution.add_link()``) this is special cased and the
+    references between ``Bug`` and ``TestExecution`` are always updated
+  - when clicking 'Report bug' from inside Test Execution the new
+    defect is reported automatically and a new browser window opens to
+    display the information
+
+
+Database migrations
+~~~~~~~~~~~~~~~~~~~
+
+- Tell the migration planner to apply
+  ``testruns.0006_rename_test_case_run_to_test_execution`` after
+  ``linkreference.0001_squashed``. This enables subsequent migrations
+  and new functionality to be applied without crashing.
+
+    .. warning::
+
+        Django should be able to handle this automatically both for
+        existing installations and for new ones. In any case make sure
+        you backup your data first and make a dry-run to verify that
+        nothing breaks!
+
+- Remove fields ``url_reg_exp``, ``validate_reg_exp`` and ``description`` from
+  ``BugSystem`` model
+- Update the following fields in ``LinkReference`` model:
+
+  - rename ``test_case_run`` to ``execution``
+  - add indexing for ``created_on`` and ``url``
+  - add ``is_defect`` field
+
+- Apply ``LinkReference`` permissions to default group ``Tester``. Fixes
+  `Issue #881 <https://github.com/kiwitcms/Kiwi/issues/881>`_
+
+    .. warning::
+
+        Administrators of existing applications will need to
+        apply these permissions by hand via the Admin section.
+
+- Remove ``testcases.Bug`` model, replaced with ``LinkReference``.
+  Closes `Issue #1029 <https://github.com/kiwitcms/Kiwi/issues/1029>`_ and
+  obsoletes `Issue #320 <https://github.com/kiwitcms/Kiwi/issues/320>`_.
+
+    .. note::
+
+        Linking bugs to TestExecution is now performed via URLs instead of
+        keeping a reference to BUG-ID and trying to reconstruct the URL
+        on the fly.
+
+    .. warning::
+
+        The model named ``Bug`` which is added by subsequent migrations
+        refers to defects reported into Kiwi TCMS minimalistic defect tracker!
+
+- New model ``bugs.Bug`` is now available. Permissions of type
+  ``bugs | bug | Can ...`` will be applied to the default group named
+  ``Tester`` only for new installations.
+
+    .. warning::
+
+        Administrators of existing applications will need to
+        apply these permissions by hand via the Admin section.
+
+
+API
+~~~
+
+- ``TestExecution.add_link()`` method now returns serialized
+  ``LinkReference`` object.
+- ``TestExecution.remove_link()`` method now accepts one parameter of type
+  ``dict`` used to filter the objects which to remove
+- ``TestExecution.get_links()`` method now accepts one parameter of type
+  ``dict`` instead of ``int``
+- ``TestExecution.add_link()`` method signature changed from
+  (int, str, str) to (dict), where the single parameter holds field values for
+  the ``LinkReference`` model
+- Remove ``TestExecution.add_bug()`` method, use ``TestExecution.add_link()``
+- Remove ``TestExecution.remove_bug()`` method, use
+  ``TestExecution.remove_link()``
+- Remove ``TestCase.add_bug()`` method
+- Remove ``TestCase.remove_bug()`` method
+- Remove ``Bug.remove()`` method, use ``TestExecution.remove_link()``
+- Remove ``Bug.create()`` method, use ``TestExecution.add_link()``
+- Add method ``Bug.details()`` which together with the underlying
+  ``IssueTracker.details()`` is the foundation of how Kiwi TCMS fetches
+  extra details from the issue tracking system. The default implementation
+  uses OpenGraph protocol to collect the data that will be shown. You may
+  override ``.details()`` for each issue tracker (or add your own IT) to
+  extend this functionality. Information is cached for 1 hour by default.
+  References
+  `Issue #117 <https://github.com/kiwitcms/Kiwi/issues/117>`_
+- Add methods ``Bug.add_tag()`` and ``Bug.remove_tag()``
+- Existing method with name ``Bug.filter()`` has changed behavior. It is
+  now used to query objects from Kiwi TCMS minimalistic defect tracker
+
+
+Removed functionality
+~~~~~~~~~~~~~~~~~~~~~
+
+- Remove ``IssueTrackerType.all_issues_link()`` method. This was used in
+  TestRun Report page to show a single link that will open all bugs in the
+  Issue Tracker. Most trackers don't support this and the UI portion has
+  been rewritten
+- Remove ``LinkOnly`` issue tracker - obsolete because all defects are
+  now added to TestExecutions via their URLs
+- Remove bulk-add/bulk-remove of bugs in TestRun page, replaced by bulk-add
+  for hyperlinks
+
+
+Settings
+~~~~~~~~
+
+- Respect the ``CACHES`` setting, see
+  `Django docs <https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES>`_
+  for more info. Initially this setting is used to cache defect details received
+  via Issue Tracker integration. See
+  `Issue #117 <https://github.com/kiwitcms/Kiwi/issues/117>`_
+
+
+Bug fixes
+~~~~~~~~~
+
+- Don't auto-download FontAwesome for SimpleMDE. Resolves icons disappearing
+  on pages which have the markdown editor. Fixes
+  `Issue #905 <https://github.com/kiwitcms/Kiwi/issues/905>`_
+- Reorder HTML elements so Delete button is still visible in TestCase review
+  comment section. Fixes
+  `Issue #1013 <https://github.com/kiwitcms/Kiwi/issues/1013>`_ (Rady Madjev)
+- Remove section that displays bugs in TestExecution container. Bugs are now
+  denoted by a small icon next to their hyperlink. Closes
+  `Issue #475 <https://github.com/kiwitcms/Kiwi/issues/475>`_
+- Cache Issue Tracker connections per ``base_url``. Fixes
+  `Issue #290 <https://github.com/kiwitcms/Kiwi/issues/290>`_
+
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Lots of refactoring from function based views to class based views (Rady Madjev)
+- Use JavaScript and the API to remove case execution instead of dedicated
+  backend function (Rady Madjev)
+- Update pylint directives around missing permissions (Svetlomir Balevski)
+- Fix typo in identifier. Fixes
+  `CID 344186 <https://scan4.coverity.com/reports.htm#v38579/p14953/fileInstanceId=65904319&defectInstanceId=11526612&mergedDefectId=344186&eventId=1>`_
+- Use ``TestExecution.add_link()`` and ``TestExecution.remove_link()`` in UI
+  instead of dedicated backend function.
+- Remove unused LinkReference views, forms and tests modules
+
+
+Translations
+~~~~~~~~~~~~
+
+- Introduce a translation mode where you can translate the interface via
+  in-context editor. For more information see
+  `Translation guide <https://kiwitcms.readthedocs.io/en/latest/contribution.html#translation>`_.
+  Fixes `Issue #1098 <https://github.com/kiwitcms/Kiwi/issues/1098>`_
+- Updated `Albanian translation <https://crowdin.com/project/kiwitcms/sq#>`_
+- Updated `Bulgarian translation <https://crowdin.com/project/kiwitcms/bg#>`_
+- Updated `Chinese Traditional translation <https://crowdin.com/project/kiwitcms/zh-TW#>`_
+- Updated `French translation <https://crowdin.com/project/kiwitcms/fr#>`_
+- Updated `Greek translation <https://crowdin.com/project/kiwitcms/el#>`_
+- Updated `Italian translation <https://crowdin.com/project/kiwitcms/it#>`_
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+- Updated `Turkish translation <https://crowdin.com/project/kiwitcms/tr#>`_
+
+For more information check-out
+`all supported languages <https://crowdin.com/project/kiwitcms>`_.
+To request new language
+`click here <https://github.com/kiwitcms/Kiwi/issues/new?title=Request+new+language:+...&body=Please+enable+...+language+in+Crowdin>`_!
+
+
+
 Kiwi TCMS 6.11 (02 Aug 2019)
 ----------------------------
 
@@ -25,9 +571,9 @@ Security
 ~~~~~~~~
 
 - Update Django from 2.2.2 to 2.2.4, see
-  `release notes <https://docs.djangoproject.com/en/2.2/releases/2.2.4/>`_
+  `2.2.4 release notes <https://docs.djangoproject.com/en/2.2/releases/2.2.4/>`_
 - Update marked to version 0.7.0, see
-  `release notes <https://github.com/markedjs/marked/releases/tag/v0.7.0>`_
+  `0.7.0 release notes <https://github.com/markedjs/marked/releases/tag/v0.7.0>`_
 
 
 Improvements
@@ -337,9 +883,7 @@ API
 
 - Rename ``TestCaseRun.*`` to ``TestExecution.*``
 - Rename ``TestCaseRunStatus.*`` to ``TestExecution.*``
-- This version keeps the old names for backwards compatibility reasons but they
-  will be removed in
-  `Issue #889 <https://github.com/kiwitcms/Kiwi/issues/889>`_
+- This version keeps the old names for backwards compatibility reasons
 
 
 Bug fixes

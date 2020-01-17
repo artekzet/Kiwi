@@ -2,19 +2,20 @@
 # pylint: disable=invalid-name
 
 import datetime
-from mock import patch
 
-from django.urls import reverse
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.test import TestCase, override_settings
-from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from mock import patch
 
 from tcms import signals
 from tcms.tests.factories import UserFactory
-from .models import UserActivationKey
 
+from .models import UserActivationKey
 
 User = get_user_model()  # pylint: disable=invalid-name
 
@@ -28,7 +29,7 @@ class TestSetRandomKey(TestCase):
 
     @patch('tcms.kiwi_auth.models.datetime')
     def test_set_random_key(self, mock_datetime):
-        now = datetime.datetime.now()
+        now = timezone.now()
         in_7_days = datetime.timedelta(7)
 
         mock_datetime.datetime.today.return_value = now
@@ -147,8 +148,7 @@ class TestRegistration(TestCase):
 somebody just registered an account with username %(username)s at your
 Kiwi TCMS instance and is awaiting your approval!
 
-Go to %(user_url)s to activate the account!
-""") % values
+Go to %(user_url)s to activate the account!""") % values
             self.assertEqual(expected.strip(), send_mail.call_args_list[0][0][1].strip())
             self.assertIn('admin@kiwitcms.org', send_mail.call_args_list[0][0][-1])
         finally:
@@ -178,8 +178,7 @@ Go to %(user_url)s to activate the account!
 thank you for signing up for an %(site_domain)s account!
 
 To activate your account, click this link:
-%(confirm_url)s
-""") % values + "\n"
+%(confirm_url)s""") % values + "\n"
         send_mail.assert_called_once_with(expected_subject, expected_body,
                                           settings.DEFAULT_FROM_EMAIL,
                                           ['new-tester@example.com'],
@@ -231,7 +230,7 @@ class TestConfirm(TestCase):
         with patch('tcms.kiwi_auth.models.secrets') as _secrets:
             _secrets.token_hex.return_value = fake_activation_key
             key = UserActivationKey.set_random_key_for_user(self.new_user)
-            key.key_expires = datetime.datetime.now() - datetime.timedelta(days=10)
+            key.key_expires = timezone.now() - datetime.timedelta(days=10)
             key.save()
 
         confirm_url = reverse('tcms-confirm', args=[fake_activation_key])

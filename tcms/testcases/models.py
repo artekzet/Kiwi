@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
-from django.urls import reverse
 from django.db import models
-from django.utils.translation import override
 from django.db.models import ObjectDoesNotExist
-
+from django.urls import reverse
+from django.utils.translation import override
+from django.db.models import Q
 import vinaigrette
 
-from tcms.core.models import TCMSActionModel
 from tcms.core.history import KiwiHistoricalRecords
-from tcms.issuetracker.types import IssueTrackerType
+from tcms.core.models import TCMSActionModel
 from tcms.testcases.fields import MultipleEmailField
+from tcms.rpc.serializer import TestCaseXMLRPCSerializer
+from tcms.rpc.utils import distinct_filter
 
 
 class TestCaseStatus(TCMSActionModel):
     id = models.AutoField(
-        db_column='case_status_id', max_length=6, primary_key=True
+        db_column='case_status_id', primary_key=True
     )
     # FIXME: if name has unique value for each status, give unique constraint
     # to this field. Otherwise, all SQL queries filtering upon this
@@ -113,8 +114,6 @@ class TestCase(TCMSActionModel):
 
     @classmethod
     def to_xmlrpc(cls, query=None):
-        from tcms.xmlrpc.serializer import TestCaseXMLRPCSerializer
-        from tcms.xmlrpc.utils import distinct_filter
 
         _query = query or {}
         qs = distinct_filter(TestCase, _query).order_by('pk')
@@ -153,7 +152,6 @@ class TestCase(TCMSActionModel):
     @classmethod
     def list(cls, query, plan=None):
         """List the cases with request"""
-        from django.db.models import Q
 
         if not plan:
             queryset = cls.objects
@@ -223,46 +221,16 @@ class TestCase(TCMSActionModel):
         if query.get('component'):
             queryset = queryset.filter(component=query['component'])
 
-        if query.get('bug_id'):
-            queryset = queryset.filter(case_bug__bug_id__in=query['bug_id'])
-
         if query.get('is_automated'):
             queryset = queryset.filter(is_automated=query['is_automated'])
 
         return queryset.distinct()
-
-    def add_bug(self, bug_id, bug_system_id, summary=None, description=None,
-                case_run=None, bz_external_track=False):
-        bug, created = self.case_bug.get_or_create(
-            bug_id=bug_id,
-            case_run=case_run,
-            bug_system_id=bug_system_id,
-            summary=summary,
-            description=description,
-        )
-
-        if created:
-            if bz_external_track:
-                bug_system = BugSystem.objects.get(pk=bug_system_id)
-                issue_tracker = IssueTrackerType.from_name(bug_system.tracker_type)(bug_system)
-                if not issue_tracker.is_adding_testcase_to_issue_disabled():
-                    issue_tracker.add_testcase_to_issue([self], bug)
-                else:
-                    raise ValueError('Enable linking test cases by configuring API parameters '
-                                     'for this Issue Tracker!')
-        else:
-            raise ValueError('Bug %s already exist.' % bug_id)
 
     def add_component(self, component):
         return TestCaseComponent.objects.get_or_create(case=self, component=component)
 
     def add_tag(self, tag):
         return TestCaseTag.objects.get_or_create(case=self, tag=tag)
-
-    def get_bugs(self):
-        return Bug.objects.select_related(
-            'case_run', 'bug_system'
-        ).filter(case__case_id=self.case_id)
 
     def get_previous_and_next(self, pk_list):
         current_idx = pk_list.index(self.pk)
@@ -283,18 +251,6 @@ class TestCase(TCMSActionModel):
 
         return self.text
 
-    def remove_bug(self, bug_id, run_id=None):
-        query = Bug.objects.filter(
-            bug_id=bug_id,
-            case=self.pk
-        )
-        if run_id:
-            query = query.filter(case_run=run_id)
-        else:
-            query = query.filter(case_run__isnull=True)
-
-        query.delete()
-
     def remove_component(self, component):
         # note: cannot use self.component.remove(component) on a ManyToManyField
         # which specifies an intermediary model so we use the model manager!
@@ -305,6 +261,9 @@ class TestCase(TCMSActionModel):
 
     def _get_absolute_url(self, request=None):
         return reverse('testcases-get', args=[self.pk, ])
+
+    def get_absolute_url(self):
+        return self._get_absolute_url()
 
     def _get_email_conf(self):
         try:
@@ -344,10 +303,6 @@ class BugSystem(TCMSActionModel):
         the admin interface and their meaning is:
 
         #. **name:** a visual name for this bug tracker, e.g. `Kiwi TCMS GitHub`;
-        #. **description:** a longer description shown in the admin;
-        #. **url_reg_exp:** shown as **URL format string** in the UI - a format string
-           used to construct URLs from bug IDs;
-        #. **validate_reg_exp:** regular expression used for bug ID validation;
         #. **tracker_type:** a select menu to specify what kind of external
            system we interface with, e.g. Bugzilla, JIRA, others;
            The available options for this field are automatically populated
@@ -359,11 +314,7 @@ class BugSystem(TCMSActionModel):
                 Kiwi TCMS takes care to handle misconfigurations we advise you to
                 configure your API credentials properly!
 
-        #. **base_url:** base URL of this bug tracker. This is used to construct
-           other links to the issue tracker, e.g. link to view multiple bugs at once
-           or when a user tries to report a bug directly from a TestCase. The browser will open
-           another window with pre-defined values based on the test case being
-           executed and the type of the external issue tracking system.
+        #. **base_url:** base URL of this bug tracker.
 
            .. warning::
 
@@ -380,18 +331,6 @@ class BugSystem(TCMSActionModel):
                 to the internal RPC object!
     """
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
-    url_reg_exp = models.CharField(
-        max_length=8192,
-        verbose_name='URL format string',
-        help_text='A valid Python format string such as http://bugs.example.com/%s'
-    )
-    validate_reg_exp = models.CharField(
-        max_length=128,
-        verbose_name='RegExp for ID validation',
-        help_text=r'A valid JavaScript regular expression such as ^\d$',
-    )
-
     tracker_type = models.CharField(
         max_length=128,
         verbose_name='Type',
@@ -433,44 +372,6 @@ Leave empty to disable!
 
     def __str__(self):
         return self.name
-
-    @classmethod
-    def get_by_id(cls, system_id):
-        return cls.objects.get(pk=system_id)
-
-
-class Bug(TCMSActionModel):
-    bug_id = models.CharField(max_length=25)
-    case_run = models.ForeignKey('testruns.TestExecution', default=None, blank=True, null=True,
-                                 related_name='case_run_bug', on_delete=models.CASCADE)
-    case = models.ForeignKey(TestCase, related_name='case_bug', on_delete=models.CASCADE)
-    bug_system = models.ForeignKey(BugSystem, default=1, on_delete=models.CASCADE)
-    summary = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-
-    class Meta:
-        unique_together = (('bug_id', 'case_run', 'case'),
-                           ('bug_id', 'case_run'))
-
-    def unique_error_message(self, model_class, unique_check):
-        """Specific to invalid bug id"""
-        bug_id_uniques = (('bug_id', 'case_run', 'case'),
-                          ('bug_id', 'case_run'))
-        if unique_check in bug_id_uniques:
-            return 'Bug %d exists in run %d already.' % (self.bug_id, self.case_run.pk)
-        return super().unique_error_message(model_class, unique_check)
-
-    def __str__(self):
-        return self.bug_id
-
-    def get_name(self):
-        if self.summary:
-            return self.summary
-
-        return self.bug_id
-
-    def get_full_url(self):
-        return self.bug_system.url_reg_exp % self.bug_id
 
 
 class TestCaseEmailSettings(models.Model):

@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-few-public-methods, unused-argument
 
-from datetime import datetime
-
-from django.db.models import signals
-from django.conf import settings
-
 import factory
+from django.conf import settings
+from django.db.models import signals
+from django.utils import timezone
 from factory.django import DjangoModelFactory
 
 from tcms.management.models import Priority
 from tcms.testcases.models import TestCaseStatus
-from tcms.testcases.models import BugSystem
 from tcms.testruns.models import TestExecutionStatus
-
 
 # ### Factories for app management ###
 
@@ -125,7 +121,7 @@ class TestPlanFactory(DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'Plan name %d' % n)
     text = factory.Sequence(lambda n: 'Plan document %d' % n)
-    create_date = factory.LazyFunction(datetime.now)
+    create_date = factory.LazyFunction(timezone.now)
     product_version = factory.SubFactory(VersionFactory)
     author = factory.SubFactory(UserFactory)
     product = factory.SubFactory(ProductFactory)
@@ -294,19 +290,15 @@ class TestExecutionFactory(DjangoModelFactory):
     build = factory.SubFactory(BuildFactory)
 
 
-class BugFactory(DjangoModelFactory):
+class LinkReferenceFactory(DjangoModelFactory):
 
     class Meta:
-        model = 'testcases.Bug'
+        model = 'linkreference.LinkReference'
 
-    bug_id = factory.Sequence(lambda n: n)
-    summary = factory.LazyAttribute(lambda obj: 'Summary of bug %s' % obj.bug_id)
-    description = ''
-    bug_system = factory.LazyFunction(
-        lambda: BugSystem.objects.first()  # pylint: disable=unnecessary-lambda
-    )
-    case_run = factory.SubFactory(TestExecutionFactory)
-    case = factory.SubFactory(TestCaseFactory)
+    execution = factory.SubFactory(TestExecutionFactory)
+    name = factory.Sequence(lambda n: "Bug %d" % n)
+    url = factory.Sequence(lambda n: "https://example.com/link/%d/" % n)
+    is_defect = True
 
 
 class TestRunTagFactory(DjangoModelFactory):

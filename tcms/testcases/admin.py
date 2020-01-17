@@ -2,13 +2,13 @@
 import inspect
 
 from django import forms
-from django.urls import reverse
 from django.contrib import admin
 from django.forms.widgets import Select
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 
-from tcms.issuetracker import types
 from tcms.core.history import ReadOnlyHistoryAdmin
+from tcms.issuetracker import types
 from tcms.testcases.models import BugSystem, Category, TestCase
 
 
@@ -71,13 +71,11 @@ class BugSystemAdminForm(forms.ModelForm):
     # make password show asterisks
     api_password = forms.CharField(
         widget=forms.PasswordInput(render_value=True),
-        label='API password or token',
         required=False
     )
 
     # select only tracker types for which we have available integrations
     tracker_type = IssueTrackerTypeField(
-        label='Type',
         help_text='This determines how Kiwi TCMS integrates with the IT system',
     )
 
@@ -88,10 +86,10 @@ class BugSystemAdminForm(forms.ModelForm):
 
 class BugSystemAdmin(admin.ModelAdmin):
     search_fields = (('name',))
-    list_display = ('id', 'name', 'url_reg_exp')
+    list_display = ('id', 'name', 'base_url')
     fieldsets = [
         ('', {
-            'fields': ('name', 'description', 'url_reg_exp', 'validate_reg_exp'),
+            'fields': ('name',),
         }),
         ('External Issue Tracker Integration', {
             'fields': ('tracker_type', 'base_url', 'api_url', 'api_username', 'api_password'),

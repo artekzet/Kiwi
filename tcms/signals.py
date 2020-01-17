@@ -1,6 +1,6 @@
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument, import-outside-toplevel
 """
-Defines custom signals sent throught out Kiwi TCMS. You can connect your own
+Defines custom signals sent throughout Kiwi TCMS. You can connect your own
 handlers if you'd like to augment some of the default behavior!
 
 If you simply want to connect a signal handler add the following code to your
@@ -14,21 +14,22 @@ In case you want to perform more complex signal handling we advise you to create
 a new Django app and connect your handler function(s) to the desired signals
 inside the
 `AppConfig.ready
-<https://docs.djangoproject.com/en/2.0/ref/applications/#django.apps.AppConfig.ready>`_
+<https://docs.djangoproject.com/en/2.2/ref/applications/#django.apps.AppConfig.ready>`_
 method. When you are done connect your Django app to the rest of Kiwi TCMS by
 altering the following setting::
 
     INSTALLED_APPS += ['my_custom_app']
 """
-from django.dispatch import Signal
 from django.db.models import ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
+from django.dispatch import Signal
+from django.utils.translation import gettext_lazy as _
 
 __all__ = [
     'USER_REGISTERED_SIGNAL',
 
     'notify_admins',
     'pre_save_clean',
+    'handle_comments_pre_delete',
     'handle_emails_post_case_save',
     'handle_emails_pre_case_delete',
     'handle_emails_post_plan_save',
@@ -158,3 +159,19 @@ def handle_emails_post_run_save(sender, *_args, **kwargs):
         subject, context = history_email_for(instance, instance.summary)
 
     mailto(template_name, subject, instance.get_notify_addrs(), context)
+
+
+def handle_comments_pre_delete(sender, **kwargs):
+    """
+        Delete comments attached to object which is about to be
+        deleted b/c django-comments' object_pk is not a FK relationship
+        and we can't rely on cascading delete!
+    """
+    from tcms.core.helpers.comments import get_comments
+
+    if kwargs.get('raw', False):
+        return
+
+    instance = kwargs['instance']
+
+    get_comments(instance).delete()

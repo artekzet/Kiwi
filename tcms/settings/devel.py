@@ -4,6 +4,7 @@
 """
 
 import os
+
 from .common import *  # noqa: F403
 
 # Debug settings
@@ -21,6 +22,12 @@ DATABASES = {
     }
 }
 
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
 # django-debug-toolbar settings
 
 MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']  # noqa: F405

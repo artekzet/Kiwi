@@ -30,8 +30,8 @@ a script which will parse your input files, possibly reorganize them
 and send the information to Kiwi TCMS. This gives you the ultimate control
 over how to import and export data to/from Kiwi TCMS!
 
-An example how to use this API can be found
-`here <https://gist.github.com/atodorov/f5aed028b6f254d97bcaf93453abe8d2>`_.
+Example(s) how to use this API can be found
+`here <https://github.com/kiwitcms/api-scripts>`_.
 
 Further information can be found at :ref:`api` and
 https://tcms-api.readthedocs.io/en/latest/modules/tcms_api.plugin_helpers.html.
@@ -41,3 +41,7 @@ https://tcms-api.readthedocs.io/en/latest/modules/tcms_api.plugin_helpers.html.
     Please be a good open source citizen and share your import/export scripts
     with the rest of the Kiwi TCMS community. You are welcome to do so by
     opening a pull request at https://github.com/kiwitcms/api-scripts.
+
+
+Alternatively you can develop your customized import/export as a web
+application and distribute it to your users as a Kiwi TCMS plugin.

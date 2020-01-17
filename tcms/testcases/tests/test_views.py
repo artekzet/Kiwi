@@ -5,21 +5,20 @@ import unittest
 from http import HTTPStatus
 from urllib.parse import urlencode
 
-from django.urls import reverse
 from django.forms import ValidationError
 from django.test import RequestFactory
+from django.urls import reverse
 from django.utils.translation import override
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
-from tcms.testcases.fields import MultipleEmailField
 from tcms.management.models import Priority, Tag
+from tcms.testcases.fields import MultipleEmailField
 from tcms.testcases.models import TestCase, TestCasePlan
 from tcms.testcases.views import get_selected_testcases
 from tcms.testruns.models import TestExecutionStatus
-from tcms.tests.factories import BugFactory
-from tcms.tests.factories import TestCaseFactory
-from tcms.tests import BasePlanCase, BaseCaseRun, remove_perm_from_user
-from tcms.tests import user_should_have_perm
+from tcms.tests import (BaseCaseRun, BasePlanCase, remove_perm_from_user,
+                        user_should_have_perm)
+from tcms.tests.factories import LinkReferenceFactory, TestCaseFactory
 from tcms.utils.permissions import initiate_user_with_default_setups
 
 
@@ -52,8 +51,8 @@ class TestGetCaseRunDetailsAsDefaultUser(BaseCaseRun):
 
         self.assertContains(
             response,
-            '<textarea name="comment" cols="40" id="id_comment" maxlength="10000" '
-            'rows="10">\n</textarea>',
+            '<textarea name="comment" cols="40" id="id_comment" maxlength="3000" '
+            'required rows="10">\n</textarea>',
             html=True)
 
         with override('en'):
@@ -66,11 +65,8 @@ class TestGetCaseRunDetailsAsDefaultUser(BaseCaseRun):
                 )
 
     def test_user_sees_bugs(self):
-        bug_1 = BugFactory()
-        bug_2 = BugFactory()
-
-        self.execution_1.add_bug(bug_1.bug_id, bug_1.bug_system.pk)
-        self.execution_1.add_bug(bug_2.bug_id, bug_2.bug_system.pk)
+        bug_1 = LinkReferenceFactory(execution=self.execution_1)
+        bug_2 = LinkReferenceFactory(execution=self.execution_1)
 
         url = reverse('execution-detail-pane', args=[self.execution_1.case.pk])
         response = self.client.get(
@@ -82,8 +78,8 @@ class TestGetCaseRunDetailsAsDefaultUser(BaseCaseRun):
         )
 
         self.assertEqual(HTTPStatus.OK, response.status_code)
-        self.assertContains(response, bug_1.get_full_url())
-        self.assertContains(response, bug_2.get_full_url())
+        self.assertContains(response, bug_1.url)
+        self.assertContains(response, bug_2.url)
 
 
 class TestMultipleEmailField(unittest.TestCase):
@@ -107,29 +103,26 @@ class TestMultipleEmailField(unittest.TestCase):
             self.assertEqual(pyobj, [])
 
     def test_clean(self):
-        value = u'zhangsan@localhost'
+        value = 'zhangsan@localhost'
         data = self.field.clean(value)
-        self.assertEqual(data, [value])
+        self.assertEqual(data, value)
 
-        value = u'zhangsan@localhost,lisi@example.com'
-        data = self.field.clean(value)
-        self.assertEqual(data, [u'zhangsan@localhost', u'lisi@example.com'])
+        data = self.field.clean('zhangsan@localhost,lisi@example.com')
+        self.assertEqual(data, 'zhangsan@localhost,lisi@example.com')
 
-        value = u',zhangsan@localhost, ,lisi@example.com, \n'
-        data = self.field.clean(value)
-        self.assertEqual(data, [u'zhangsan@localhost', 'lisi@example.com'])
+        data = self.field.clean(',zhangsan@localhost, ,lisi@example.com, \n')
+        self.assertEqual(data, 'zhangsan@localhost,lisi@example.com')
 
-        value = ',zhangsan,zhangsan@localhost, \n,lisi@example.com, '
-        self.assertRaises(ValidationError, self.field.clean, value)
+        with self.assertRaises(ValidationError):
+            self.field.clean(',zhangsan,zhangsan@localhost, \n,lisi@example.com, ')
 
-        value = ''
-        self.field.required = True
-        self.assertRaises(ValidationError, self.field.clean, value)
+        with self.assertRaises(ValidationError):
+            self.field.required = True
+            self.field.clean('')
 
-        value = ''
         self.field.required = False
-        data = self.field.clean(value)
-        self.assertEqual(data, [])
+        data = self.field.clean('')
+        self.assertEqual(data, '')
 
 
 class TestNewCase(BasePlanCase):
@@ -148,6 +141,7 @@ class TestNewCase(BasePlanCase):
         cls.link = 'http://somelink.net'
         cls.notes = 'notes'
         cls.data = {
+            'author': cls.tester.pk,
             'summary': cls.summary,
             'default_tester': cls.tester.pk,
             'product': cls.case.category.product.pk,
@@ -159,7 +153,22 @@ class TestNewCase(BasePlanCase):
             'arguments': cls.arguments,
             'requirement': cls.requirement,
             'extra_link': cls.link,
-            'notes': cls.notes
+            'notes': cls.notes,
+
+            'email_settings-0-auto_to_case_author': 'on',
+            'email_settings-0-auto_to_run_manager': 'on',
+            'email_settings-0-auto_to_case_run_assignee': 'on',
+            'email_settings-0-auto_to_case_tester': 'on',
+            'email_settings-0-auto_to_run_tester': 'on',
+            'email_settings-0-notify_on_case_update': 'on',
+            'email_settings-0-notify_on_case_delete': 'on',
+            'email_settings-0-cc_list': 'info@example.com',
+            'email_settings-0-case': '',
+            'email_settings-0-id': cls.case.emailing.pk,
+            'email_settings-TOTAL_FORMS': '1',
+            'email_settings-INITIAL_FORMS': '1',
+            'email_settings-MIN_NUM_FORMS': '0',
+            'email_settings-MAX_NUM_FORMS': '1',
         }
 
         user_should_have_perm(cls.tester, 'testcases.add_testcase')
@@ -199,6 +208,7 @@ class TestNewCase(BasePlanCase):
         self.assertEqual(TestCase.objects.filter(summary=self.summary).count(), 0)
 
     def _assertTestCase(self, test_case):
+        self.assertEqual(test_case.author, self.tester)
         self.assertEqual(test_case.summary, self.summary)
         self.assertEqual(test_case.category, self.case.category)
         self.assertEqual(test_case.default_tester, self.tester)
@@ -235,6 +245,7 @@ class TestEditCase(BasePlanCase):
 
         # Copy, then modify or add new data for specific tests below
         cls.edit_data = {
+            'author': cls.case_1.author.pk,
             'from_plan': cls.plan.pk,
             'summary': cls.case_1.summary,
             'product': cls.case_1.category.product.pk,
@@ -250,16 +261,26 @@ class TestEditCase(BasePlanCase):
             'priority': cls.case_1.priority.pk,
             'tag': 'RHEL',
             'text': 'Given-When-Then',
-            'cc_list': '',
+
+            'email_settings-0-auto_to_case_author': 'on',
+            'email_settings-0-auto_to_run_manager': 'on',
+            'email_settings-0-auto_to_case_run_assignee': 'on',
+            'email_settings-0-auto_to_case_tester': 'on',
+            'email_settings-0-auto_to_run_tester': 'on',
+            'email_settings-0-notify_on_case_update': 'on',
+            'email_settings-0-notify_on_case_delete': 'on',
+            'email_settings-0-cc_list': '',
+            'email_settings-0-case': cls.case_1.pk,
+            'email_settings-0-id': cls.case_1.emailing.pk,
+            'email_settings-TOTAL_FORMS': '1',
+            'email_settings-INITIAL_FORMS': '1',
+            'email_settings-MIN_NUM_FORMS': '0',
+            'email_settings-MAX_NUM_FORMS': '1',
         }
 
     def test_404_if_case_id_not_exist(self):
         url = reverse('testcases-edit', args=[99999])
         response = self.client.get(url)
-        self.assert404(response)
-
-    def test_404_if_from_plan_not_exist(self):
-        response = self.client.get(self.case_edit_url, {'from_plan': 9999})
         self.assert404(response)
 
     def test_show_edit_page(self):
@@ -277,8 +298,8 @@ class TestEditCase(BasePlanCase):
         redirect_url = reverse('testcases-get', args=[self.case_1.pk])
         self.assertRedirects(response, redirect_url)
 
-        edited_case = TestCase.objects.get(pk=self.case_1.pk)
-        self.assertEqual(new_summary, edited_case.summary)
+        self.case_1.refresh_from_db()
+        self.assertEqual(new_summary, self.case_1.summary)
 
 
 class TestPrintablePage(BasePlanCase):
@@ -338,6 +359,17 @@ class TestCloneCase(BasePlanCase):
             self.assertContains(response,
                                 "TC-%d: %s" % (case.pk, case.summary))
 
+    def test_user_without_permission_should_not_be_able_to_clone_a_case(self):
+        remove_perm_from_user(self.tester, 'testcases.add_testcase')
+        base_url = reverse('tcms-login') + '?next='
+        expected = base_url + reverse('testcases-clone') + "?case=%d" % self.case_1.pk
+        response = self.client.get(self.clone_url, {'case': [self.case_1.pk, ]})
+
+        self.assertRedirects(
+            response,
+            expected
+        )
+
 
 class TestSearchCases(BasePlanCase):
     """Test search view method"""
@@ -351,6 +383,13 @@ class TestSearchCases(BasePlanCase):
     def test_page_renders(self):
         response = self.client.get(self.search_url, {})
         self.assertContains(response, '<option value="">----------</option>', html=True)
+
+    def test_get_parameter_should_be_accepted_for_a_product(self):
+        response = self.client.get(self.search_url, {'product': self.product.pk})
+        self.assertContains(response,
+                            '<option value="%d" selected>%s</option>' % (self.product.pk,
+                                                                         self.product.name),
+                            html=True)
 
 
 class TestGetCasesFromPlan(BasePlanCase):

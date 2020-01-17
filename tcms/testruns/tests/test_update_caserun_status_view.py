@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-ancestors
 
-from datetime import datetime
-
-from django.urls import reverse
 from django.conf import settings
-from django.utils.translation import override
+from django.urls import reverse
+from django.utils import timezone
 
 from tcms.testruns.models import TestExecutionStatus
-
-from tcms.tests import BaseCaseRun
-from tcms.tests import user_should_have_perm
+from tcms.tests import BaseCaseRun, user_should_have_perm
 
 
 class TestUpdateCaseRunStatusView(BaseCaseRun):
@@ -22,10 +18,10 @@ class TestUpdateCaseRunStatusView(BaseCaseRun):
         cls.url = reverse('testruns-update_caserun_status')
 
     def test_update_status_positive_scenario(self):
-        before_update = datetime.now()
-        status_passed = TestExecutionStatus.objects.get(name=TestExecutionStatus.PASSED)
+        before_update = timezone.now()
+        new_status = TestExecutionStatus.objects.filter(weight__gt=0).first()
         post_data = {
-            'status_id': status_passed.pk,
+            'status_id': new_status.pk,
             'object_pk[]': [self.execution_1.pk, self.execution_2.pk],
         }
 
@@ -37,14 +33,13 @@ class TestUpdateCaseRunStatusView(BaseCaseRun):
 
         for caserun in [self.execution_1, self.execution_2]:
             caserun.refresh_from_db()
-            self.assertEqual(caserun.status_id, status_passed.pk)
+            self.assertEqual(caserun.status_id, new_status.pk)
             self.assertEqual(caserun.tested_by, self.tester)
             self.assertGreater(caserun.close_date, before_update)
-            self.assertLess(caserun.close_date, datetime.now())
+            self.assertLess(caserun.close_date, timezone.now())
 
         # verify we didn't update the last TCR by mistake
         self.execution_3.refresh_from_db()
-        with override('en'):
-            self.assertEqual(self.execution_3.status.name, TestExecutionStatus.IDLE)
+        self.assertEqual(self.execution_3.status.weight, 0)
         self.assertNotEqual(self.execution_3.tested_by, self.tester)
         self.assertIsNone(self.execution_3.close_date)

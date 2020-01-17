@@ -1,35 +1,33 @@
 # -*- coding: utf-8 -*-
-import pkg_resources
 from importlib import import_module
 
+import pkg_resources
+from attachments import urls as attachments_urls
 from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
-
 from grappelli import urls as grappelli_urls
-from attachments import urls as attachments_urls
-from modernrpc.core import JSONRPC_PROTOCOL
-from modernrpc.core import XMLRPC_PROTOCOL
+from modernrpc.core import JSONRPC_PROTOCOL, XMLRPC_PROTOCOL
 from modernrpc.views import RPCEntryPoint
+
+from tcms.bugs import urls as bugs_urls
 from tcms.core import ajax
 from tcms.core import views as core_views
-from tcms.core.contrib.comments import views as comments_views
-from tcms.core.contrib.linkreference import views as linkreference_views
-from tcms.testplans import urls as testplans_urls
-from tcms.testcases import urls as testcases_urls
 from tcms.kiwi_auth import urls as auth_urls
-from tcms.testruns import urls as testruns_urls
 from tcms.telemetry import urls as telemetry_urls
-
+from tcms.testcases import urls as testcases_urls
+from tcms.testplans import urls as testplans_urls
+from tcms.testruns import urls as testruns_urls
 
 urlpatterns = [
-    url(r'^$', core_views.dashboard, name='core-views-index'),
+    url(r'^$', core_views.DashboardView.as_view(), name='core-views-index'),
     url(r'^xml-rpc/', RPCEntryPoint.as_view(protocol=XMLRPC_PROTOCOL)),
     url(r'^json-rpc/$', RPCEntryPoint.as_view(protocol=JSONRPC_PROTOCOL)),
-    url(r'^navigation/', core_views.navigation, name='iframe-navigation'),
+    url(r'^navigation/', core_views.NavigationView.as_view(), name='iframe-navigation'),
+    url(r'^translation-mode/', core_views.TranslationMode.as_view(), name='translation-mode'),
 
     url(r'^grappelli/', include(grappelli_urls)),
     url(r'^admin/', admin.site.urls),
@@ -41,9 +39,7 @@ urlpatterns = [
         name='ajax.update.cases-actor'),
     url(r'^management/tags/$', ajax.tags, name='ajax-tags'),
 
-    # comments
-    url(r'^comments/post/', comments_views.post, name='comments-post'),
-    url(r'^comments/delete/', comments_views.delete, name='comments-delete'),
+    url(r'^bugs/', include(bugs_urls)),
 
     # Account information zone, such as login method
     url(r'^accounts/', include(auth_urls)),
@@ -61,19 +57,13 @@ urlpatterns = [
 
     url(r'^telemetry/', include(telemetry_urls)),
 
-    url(r'^caserun/comment-many/', ajax.comment_case_runs, name='ajax-comment_case_runs'),
-    url(r'^caserun/update-bugs-for-many/', ajax.update_bugs_to_caseruns),
-
-    url(r'^linkref/add/$', linkreference_views.add, name='linkref-add'),
-    url(r'^linkref/remove/(?P<link_id>\d+)/$', linkreference_views.remove),
-
     # JavaScript translations, see
     # https://docs.djangoproject.com/en/2.1/topics/i18n/translation/#django.views.i18n.JavaScriptCatalog
     url(r'^jsi18n/$', JavaScriptCatalog.as_view(), name='javascript-catalog'),
 ]
 
 
-for plugin in pkg_resources.iter_entry_points('kiwitcms.telemetry.plugins'):
+for plugin in pkg_resources.iter_entry_points('kiwitcms.plugins'):
     plugin_urls = import_module('%s.urls' % plugin.module_name)
     urlpatterns.append(
         url(r'^%s/' % plugin.name, include(plugin_urls))

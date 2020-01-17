@@ -3,28 +3,21 @@
 
 import json
 from http import HTTPStatus
-from uuslug import slugify
 
 from django import test
 from django.conf import settings
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
+from uuslug import slugify
 
-from tcms.management.models import Product
-from tcms.management.models import Version
+from tcms.management.models import Product, Version
 from tcms.testcases.models import TestCasePlan, TestCaseStatus
 from tcms.testplans.models import TestPlan
-
-from tcms.tests.factories import ClassificationFactory
-from tcms.tests.factories import ProductFactory
-from tcms.tests.factories import TestCaseFactory
-from tcms.tests.factories import TestPlanFactory
-from tcms.tests.factories import PlanTypeFactory
-from tcms.tests.factories import UserFactory
-from tcms.tests.factories import VersionFactory
-from tcms.tests import BasePlanCase
-from tcms.tests import remove_perm_from_user
-from tcms.tests import user_should_have_perm
+from tcms.tests import (BasePlanCase, remove_perm_from_user,
+                        user_should_have_perm)
+from tcms.tests.factories import (ClassificationFactory, PlanTypeFactory,
+                                  ProductFactory, TestCaseFactory,
+                                  TestPlanFactory, UserFactory, VersionFactory)
 
 
 class BasePlanTest(test.TestCase):
@@ -71,6 +64,13 @@ class PlanTests(BasePlanTest):
         location = reverse('plans-search')
         response = self.client.get(location)
         self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_search_page_is_shown_with_get_parameter_used(self):
+        response = self.client.get(reverse('plans-search'), {'product': self.product.pk})
+        self.assertContains(response,
+                            '<option value="%d" selected>%s</option>' % (self.product.pk,
+                                                                         self.product.name),
+                            html=True)
 
     def test_plan_details(self):
         location = reverse('test_plan_url_short', args=[self.plan_id])
@@ -151,44 +151,6 @@ class TestPlanModel(test.TestCase):
         self.assertEqual(15, case_plan.sortkey)
 
 
-class TestDeleteCasesFromPlan(BasePlanCase):
-    """Test case for deleting cases from a plan"""
-
-    @classmethod
-    def setUpTestData(cls):
-        super(TestDeleteCasesFromPlan, cls).setUpTestData()
-        cls.plan_tester = UserFactory(username='tester')
-        cls.plan_tester.set_password('password')
-        cls.plan_tester.save()
-
-        cls.cases_url = reverse('plan-delete-cases', args=[cls.plan.pk])
-
-    def test_missing_cases_ids(self):
-        self.client.login(  # nosec:B106:hardcoded_password_funcarg
-            username=self.plan_tester.username,
-            password='password')
-
-        response = self.client.post(self.cases_url)
-        data = json.loads(str(response.content, encoding=settings.DEFAULT_CHARSET))
-        self.assertEqual(1, data['rc'])
-        self.assertEqual('At least one case is required to delete.',
-                         data['response'])
-
-    def test_delete_cases(self):
-        self.client.login(  # nosec:B106:hardcoded_password_funcarg
-            username=self.plan_tester.username,
-            password='password')
-
-        post_data = {'case': [self.case_1.pk, self.case_3.pk]}
-        response = self.client.post(self.cases_url, post_data)
-        data = json.loads(str(response.content, encoding=settings.DEFAULT_CHARSET))
-
-        self.assertEqual(0, data['rc'])
-        self.assertEqual('ok', data['response'])
-        self.assertFalse(self.plan.case.filter(
-            pk__in=[self.case_1.pk, self.case_3.pk]).exists())
-
-
 class TestSortCases(BasePlanCase):
     """Test case for sorting cases"""
 
@@ -198,6 +160,7 @@ class TestSortCases(BasePlanCase):
         cls.plan_tester = UserFactory(username='tester')
         cls.plan_tester.set_password('password')
         cls.plan_tester.save()
+        user_should_have_perm(cls.plan_tester, 'testplans.change_testplan')
 
         cls.cases_url = reverse('plan-reorder-cases', args=[cls.plan.pk])
 
@@ -210,23 +173,6 @@ class TestSortCases(BasePlanCase):
         data = json.loads(str(response.content, encoding=settings.DEFAULT_CHARSET))
         self.assertEqual(1, data['rc'])
         self.assertEqual('At least one case is required to re-order.', data['response'])
-
-    def test_order_cases(self):
-        self.client.login(  # nosec:B106:hardcoded_password_funcarg
-            username=self.plan_tester.username,
-            password='password')
-
-        post_data = {'case': [self.case_3.pk, self.case_1.pk]}
-        response = self.client.post(self.cases_url, post_data)
-        data = json.loads(str(response.content, encoding=settings.DEFAULT_CHARSET))
-
-        self.assertEqual({'rc': 0, 'response': 'ok'}, data)
-
-        case_plan_rel = TestCasePlan.objects.get(plan=self.plan, case=self.case_3)
-        self.assertEqual(10, case_plan_rel.sortkey)
-
-        case_plan_rel = TestCasePlan.objects.get(plan=self.plan, case=self.case_1)
-        self.assertEqual(20, case_plan_rel.sortkey)
 
 
 class TestLinkCases(BasePlanCase):

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-import pkg_resources
 from importlib import import_module
 
-from django.urls import reverse_lazy
-from django.utils.translation import ugettext_lazy as _
+import pkg_resources
 from django.contrib.messages import constants as messages
-import tcms
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
+import tcms
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ You have to override the following settings in product.py
@@ -37,8 +37,8 @@ DATABASES = {
 
 # handle MariaDB only options
 if DATABASES['default']['ENGINE'].find('mysql') > -1:
-    DATABASES['default']['OPTIONS'].update({
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    DATABASES['default']['OPTIONS'].update({  # pylint: disable=objects-update-used
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         })
 
 
@@ -89,53 +89,17 @@ FILE_UPLOAD_MAX_SIZE = 5242880
 DELETE_ATTACHMENTS_FROM_DISK = True
 
 
-# this is the main navigation menu
-MENU_ITEMS = [
-    (_('DASHBOARD'), reverse_lazy('core-views-index')),
-    (_('TESTING'), [
-        (_('New Test Plan'), reverse_lazy('plans-new')),
-        ('-', '-'),
-        (_('New Test Case'), reverse_lazy('testcases-new')),
-    ]),
-    (_('SEARCH'), [
-        (_('Search Test Plans'), reverse_lazy('plans-search')),
-        (_('Search Test Runs'), reverse_lazy('testruns-search')),
-        (_('Search Test Cases'), reverse_lazy('testcases-search')),
-    ]),
-    (_('TELEMETRY'), [
-        (_('Testing'), [
-            (_('Breakdown'), reverse_lazy('testing-breakdown')),
-            (_('Status matrix'), reverse_lazy('testing-status-matrix')),
-            (_('Execution trends'), reverse_lazy('testing-execution-trends')),
-        ]),
-        ('More coming soon',
-         'http://kiwitcms.org/blog/kiwi-tcms-team/2019/03/03/legacy-reports-become-telemetry/'),
-    ]),
-]
-
-# last element is always TELEMETRY
-for plugin in pkg_resources.iter_entry_points('kiwitcms.telemetry.plugins'):
-    plugin_menu = import_module('%s.menu' % plugin.module_name)
-    MENU_ITEMS[-1][1].extend(plugin_menu.MENU_ITEMS)
-
-# append the ADMIN menu at the end
-MENU_ITEMS.append(
-    (_('ADMIN'), [
-        (_('Users and groups'), '/admin/auth/'),
-        ('-', '-'),
-        (_('Everything else'), '/admin/'),
-    ]),
-)
-
-# redefine the help menu in the navigation bar
-HELP_MENU_ITEMS = [
-    ('https://github.com/kiwitcms/Kiwi/issues/new', _('Report an Issue')),
-    ('https://stackoverflow.com/questions/tagged/kiwi-tcms', _('Ask for help on StackOverflow')),
-    ('http://kiwitcms.readthedocs.io/en/latest/tutorial.html', _('User Guide')),
-    ('http://kiwitcms.readthedocs.io/en/latest/admin.html', _('Administration Guide')),
-    ('http://kiwitcms.readthedocs.io/en/latest/api/index.html', _('API Help')),
-]
-
+# Configure a caching backend. ATM only used to cache bug details b/c
+# external issue trackers may be slow. If you want to override see:
+# https://docs.djangoproject.com/en/2.2/topics/cache/
+# https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'kiwitcms',
+        'TIMEOUT': 3600,
+    }
+}
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -173,9 +137,10 @@ PUBLIC_VIEWS = [
     'django.contrib.auth.views.PasswordResetCompleteView',
     'tcms.kiwi_auth.views.LoginViewWithCustomTemplate',
     'tcms.kiwi_auth.views.PasswordResetView',
-    'tcms.kiwi_auth.views.register',
+    'tcms.kiwi_auth.views.Register',
     'tcms.kiwi_auth.views.confirm',
-    'tcms.core.views.navigation',
+    'tcms.core.views.NavigationView',
+    'tcms.core.views.TranslationMode',
 ]
 
 
@@ -210,8 +175,8 @@ LOCALE_PATHS = [
 ]
 
 # If you set this to False, Django will not use timezone-aware datetimes.
+# See https://docs.djangoproject.com/en/2.2/topics/i18n/timezones/
 USE_TZ = os.environ.get('KIWI_USE_TZ', 'False').lower() == 'true'
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -262,6 +227,7 @@ TEMPLATES = [
 
                 'tcms.core.context_processors.request_contents_processor',
                 'tcms.core.context_processors.settings_processor',
+                'tcms.core.context_processors.server_time_processor',
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
@@ -293,20 +259,70 @@ INSTALLED_APPS = [
     'simple_history',
 
     'tcms.core',
+    # if you wish to disable Kiwi TCMS bug tracker
+    # comment out the next line
+    'tcms.bugs',
     'tcms.kiwi_auth',
-    'tcms.core.contrib.comments.apps.AppConfig',
     'tcms.core.contrib.linkreference',
     'tcms.management',
     'tcms.testcases.apps.AppConfig',
     'tcms.testplans.apps.AppConfig',
     'tcms.testruns.apps.AppConfig',
     'tcms.telemetry',
-    'tcms.xmlrpc',
+    'tcms.rpc',
 ]
 
-for plugin in pkg_resources.iter_entry_points('kiwitcms.telemetry.plugins'):
+for plugin in pkg_resources.iter_entry_points('kiwitcms.plugins'):
     INSTALLED_APPS.append(plugin.module_name)
 
+# this is the main navigation menu
+MENU_ITEMS = [
+    (_('DASHBOARD'), reverse_lazy('core-views-index')),
+    (_('TESTING'), [
+        (_('New Test Plan'), reverse_lazy('plans-new')),
+        ('-', '-'),
+        (_('New Test Case'), reverse_lazy('testcases-new')),
+        ('-', '-') if 'tcms.bugs' in INSTALLED_APPS else (),
+        (_('New Bug'), reverse_lazy('bugs-new')) if 'tcms.bugs' in INSTALLED_APPS else (),
+    ]),
+    (_('SEARCH'), [
+        (_('Search Test Plans'), reverse_lazy('plans-search')),
+        (_('Search Test Runs'), reverse_lazy('testruns-search')),
+        (_('Search Test Cases'), reverse_lazy('testcases-search')),
+        (_('Search Bugs'), reverse_lazy('bugs-search')) if 'tcms.bugs' in INSTALLED_APPS else (),
+    ]),
+    (_('TELEMETRY'), [
+        (_('Testing'), [
+            (_('Breakdown'), reverse_lazy('testing-breakdown')),
+            (_('Status matrix'), reverse_lazy('testing-status-matrix')),
+            (_('Execution trends'), reverse_lazy('testing-execution-trends')),
+            (_('TestCase health'), reverse_lazy('test-case-health')),
+        ]),
+        ('More coming soon',
+         'http://kiwitcms.org/blog/kiwi-tcms-team/2019/03/03/legacy-reports-become-telemetry/'),
+    ]),
+    (_('ADMIN'), [
+        (_('Users and groups'), '/admin/auth/'),
+        ('-', '-'),
+        (_('Everything else'), '/admin/'),
+    ]),
+    (_('PLUGINS'), [
+    ]),
+]
+
+# last element is always PLUGINS so we can easily extend & override it
+for plugin in pkg_resources.iter_entry_points('kiwitcms.plugins'):
+    plugin_menu = import_module('%s.menu' % plugin.module_name)
+    MENU_ITEMS[-1][1].extend(plugin_menu.MENU_ITEMS)
+
+# redefine the help menu in the navigation bar
+HELP_MENU_ITEMS = [
+    ('https://github.com/kiwitcms/Kiwi/issues/new', _('Report an Issue')),
+    ('https://stackoverflow.com/questions/tagged/kiwi-tcms', _('Ask for help on StackOverflow')),
+    ('http://kiwitcms.readthedocs.io/en/latest/tutorial.html', _('User Guide')),
+    ('http://kiwitcms.readthedocs.io/en/latest/admin.html', _('Administration Guide')),
+    ('http://kiwitcms.readthedocs.io/en/latest/api/index.html', _('API Help')),
+]
 
 SERIALIZATION_MODULES = {
     'json': 'tcms.core.serializer',
@@ -316,33 +332,32 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
-# Define the custom comment app
-# http://docs.djangoproject.com/en/dev/ref/contrib/comments/custom/
-COMMENTS_APP = 'tcms.core.contrib.comments'
-
+# in alphabetic order
 MODERNRPC_METHODS_MODULES = [
-    'tcms.xmlrpc.api.attachment',
-    'tcms.xmlrpc.api.auth',
-    'tcms.xmlrpc.api.bug',
-    'tcms.xmlrpc.api.build',
-    'tcms.xmlrpc.api.bugsystem',
-    'tcms.xmlrpc.api.category',
-    'tcms.xmlrpc.api.classification',
-    'tcms.xmlrpc.api.component',
-    'tcms.xmlrpc.api.plantype',
-    'tcms.xmlrpc.api.priority',
-    'tcms.xmlrpc.api.product',
-    'tcms.xmlrpc.api.tag',
-    'tcms.xmlrpc.api.testcase',
-    'tcms.xmlrpc.api.testexecution',
-    'tcms.xmlrpc.api.testexecutionstatus',
-    'tcms.xmlrpc.api.testcasestatus',
-    'tcms.xmlrpc.api.testplan',
-    'tcms.xmlrpc.api.testrun',
-    'tcms.xmlrpc.api.user',
-    'tcms.xmlrpc.api.version',
-    'tcms.telemetry.api'
+    'tcms.telemetry.api',
+    'tcms.rpc.api.attachment',
+    'tcms.rpc.api.auth',
+    'tcms.rpc.api.bug',
+    'tcms.rpc.api.build',
+    'tcms.rpc.api.category',
+    'tcms.rpc.api.classification',
+    'tcms.rpc.api.component',
+    'tcms.rpc.api.plantype',
+    'tcms.rpc.api.priority',
+    'tcms.rpc.api.product',
+    'tcms.rpc.api.tag',
+    'tcms.rpc.api.testcase',
+    'tcms.rpc.api.testexecution',
+    'tcms.rpc.api.testexecutionstatus',
+    'tcms.rpc.api.testcasestatus',
+    'tcms.rpc.api.testplan',
+    'tcms.rpc.api.testrun',
+    'tcms.rpc.api.user',
+    'tcms.rpc.api.version',
 ]
+
+if 'tcms.bugs' in INSTALLED_APPS:
+    MODERNRPC_METHODS_MODULES.append('tcms.bugs.api')
 
 # Enable the administrator delete permission
 # In another word it's set the admin to super user or not.
@@ -371,7 +386,7 @@ LOGGING = {
         'simple': {
             'format': '[%(asctime)s] %(levelname)s %(message)s'
         },
-        'xmlrpc_log': {
+        'rpc_log': {
             'format': '[%(asctime)s] %(levelname)s XMLRPC %(process)d "%(message)s"'
         },
     },
@@ -386,10 +401,10 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'xmlrpc': {
+        'rpc': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'xmlrpc_log',
+            'formatter': 'rpc_log',
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -403,8 +418,8 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'kiwi.xmlrpc': {
-            'handlers': ['xmlrpc'],
+        'kiwi.rpc': {
+            'handlers': ['rpc'],
             'level': 'DEBUG',
             'propagate': True,
         },

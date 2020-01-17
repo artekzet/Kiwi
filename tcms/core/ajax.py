@@ -6,23 +6,18 @@ Most of these functions are use for Ajax.
 """
 from http import HTTPStatus
 
-from django.db.models import Count
-from django.forms import ValidationError
-from django.http import JsonResponse
-from django.views.generic.base import View
 from django.contrib.auth import get_user_model
-from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_POST
-from django.shortcuts import render
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.decorators import permission_required
+from django.db.models import Count
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
+from django.views.generic.base import View
 
-from tcms.testcases.models import TestCase, Bug
-from tcms.testcases.models import TestCaseTag
+from tcms.testcases.models import TestCase, TestCaseTag
 from tcms.testplans.models import TestPlan, TestPlanTag
-from tcms.testruns.models import TestExecution, TestRunTag
-from tcms.core.helpers.comments import add_comment
-from tcms.core.utils.validations import validate_bug_id
+from tcms.testruns.models import TestRunTag
 
 
 def tags(request):
@@ -155,7 +150,7 @@ class UpdateTestCaseActorsView(View):
                 user = User.objects.get(email=username)
             except User.DoesNotExist:
                 return JsonResponse({'rc': 1,
-                                     'response': _('User %s not found!' % username)},
+                                     'response': _('User %s not found!') % username},
                                     status=HTTPStatus.NOT_FOUND)
 
         what_to_update = request.POST.get('what_to_update')
@@ -169,91 +164,3 @@ class UpdateTestCaseActorsView(View):
             test_case.save()
 
         return JsonResponse({'rc': 0, 'response': 'ok'})
-
-
-@require_POST
-def comment_case_runs(request):
-    """
-    Add comment to one or more caseruns at a time.
-    """
-    data = request.POST.copy()
-    comment = data.get('comment', None)
-    if not comment:
-        return say_no('Comments needed')
-    run_ids = []
-    for run_id in data.get('run', '').split(','):
-        if run_id:
-            run_ids.append(run_id)
-    if not run_ids:
-        return say_no('No runs selected.')
-    runs = TestExecution.objects.filter(pk__in=run_ids).only('pk')
-    if not runs:
-        return say_no('No caserun found.')
-    add_comment(runs, comment, request.user)
-    return say_yes()
-
-
-def clean_bug_form(request):
-    """
-    Verify the form data, return a tuple\n
-    (None, ERROR_MSG) on failure\n
-    or\n
-    (data_dict, '') on success.\n
-    """
-    data = {}
-    try:
-        data['bugs'] = request.GET.get('bug_id', '').split(',')
-        data['runs'] = map(int, request.GET.get('case_runs', '').split(','))
-    except (TypeError, ValueError) as error:
-        return (None, 'Please specify only integers for bugs, '
-                      'caseruns(using comma to seperate IDs), '
-                      'and bug_system. (DEBUG INFO: %s)' % str(error))
-
-    data['bug_system_id'] = int(request.GET.get('bug_system_id', 1))
-
-    if request.GET.get('a') not in ('add', 'remove'):
-        return (None, 'Actions only allow "add" and "remove".')
-
-    data['action'] = request.GET.get('a')
-    data['bz_external_track'] = bool(request.GET.get('bz_external_track', False))
-
-    return (data, '')
-
-
-def update_bugs_to_caseruns(request):
-    """
-    Add one or more bugs to or remove that from\n
-    one or more caserun at a time.
-    """
-    data, error = clean_bug_form(request)
-    if error:
-        return say_no(error)
-    runs = TestExecution.objects.filter(pk__in=data['runs'])
-    bug_system_id = data['bug_system_id']
-    bug_ids = data['bugs']
-
-    try:
-        validate_bug_id(bug_ids, bug_system_id)
-    except ValidationError as error:
-        return say_no(str(error))
-
-    bz_external_track = data['bz_external_track']
-    action = data['action']
-    try:
-        if action == "add":
-            for run in runs:
-                for bug_id in bug_ids:
-                    # todo: TestExecution.add_bug and TestCase.add_bug should be removed
-                    # once this function has been refactored to JSON RPC
-                    run.add_bug(bug_id=bug_id,
-                                bug_system_id=bug_system_id,
-                                bz_external_track=bz_external_track)
-        else:
-            bugs = Bug.objects.filter(bug_id__in=bug_ids)
-            for run in runs:
-                for bug in bugs:
-                    if bug.case_run_id == run.pk:
-                        run.remove_bug(bug.bug_id, run.pk)
-    except ValueError as error:
-        return say_no(str(error))
-    return say_yes()

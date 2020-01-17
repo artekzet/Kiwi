@@ -4,18 +4,19 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
-from django.urls import reverse
 from django.shortcuts import get_object_or_404
-
+from django.urls import reverse
+from django.db.models import Q
 from uuslug import slugify
 
 from tcms.core.history import KiwiHistoricalRecords
 from tcms.core.models import TCMSActionModel
 from tcms.management.models import Version
-from tcms.testcases.models import TestCase
-from tcms.testcases.models import Category
-from tcms.testcases.models import TestCasePlan
-from tcms.testcases.models import TestCaseStatus
+from tcms.testcases.models import (Category, TestCase, TestCasePlan,
+                                   TestCaseStatus)
+
+from tcms.rpc.serializer import TestPlanXMLRPCSerializer
+from tcms.rpc.utils import distinct_filter
 
 
 class PlanType(TCMSActionModel):
@@ -61,8 +62,6 @@ class TestPlan(TCMSActionModel):
 
     @classmethod
     def to_xmlrpc(cls, query=None):
-        from tcms.xmlrpc.serializer import TestPlanXMLRPCSerializer
-        from tcms.xmlrpc.utils import distinct_filter
 
         _query = query or {}
         qs = distinct_filter(TestPlan, _query).order_by('pk')
@@ -72,7 +71,6 @@ class TestPlan(TCMSActionModel):
     @classmethod
     def list(cls, query=None):
         """docstring for list_plans"""
-        from django.db.models import Q
 
         new_query = {}
 
@@ -90,9 +88,6 @@ class TestPlan(TCMSActionModel):
             del new_query['search']
 
         return query_set.filter(**new_query).order_by('pk').distinct()
-
-    def confirmed_case(self):
-        return self.case.filter(case_status__name='CONFIRMED')
 
     def add_case(self, case, sortkey=None):
 
@@ -149,7 +144,7 @@ class TestPlan(TCMSActionModel):
         return 'Copy of {}'.format(self.name)
 
     def clone(self, name=None, product=None, version=None,
-              new_author=None, set_parent=False, copy_testcases=False, **kwargs):
+              new_author=None, set_parent=False, copy_testcases=False, **_kwargs):
         """Clone this plan
 
         :param str name: New name of cloned plan. If not passed, make_cloned_name is called

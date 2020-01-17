@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django.conf.urls import url
-from django.urls import reverse_lazy
 from django.contrib.auth import views as contrib_auth_views
+from django.urls import reverse_lazy
 
 from tcms.kiwi_auth import views
 
@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'^(?P<username>[\w.@+-]+)/profile/$', views.profile,
         name='tcms-profile'),
 
-    url(r'^register/$', views.register, name='tcms-register'),
+    url(r'^register/$', views.Register.as_view(), name='tcms-register'),
     url(r'^confirm/(?P<activation_key>[A-Za-z0-9\-]+)/$', views.confirm,
         name='tcms-confirm'),
 

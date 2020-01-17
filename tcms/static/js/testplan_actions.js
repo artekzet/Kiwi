@@ -626,51 +626,23 @@ Nitrate.TestPlans.SearchCase.on_load = function() {
   }
 };
 
-/*
- * Unlink selected cases from current TestPlan.
- *
- * Rewrite function unlinkCasePlan to avoid conflict. Remove it when confirm it's not used any more.
- */
-function unlinkCasesFromPlan(container, form, table) {
-  var selection = serializeCaseFromInputList2(table);
+
+function unlinkCasesFromPlan(plan_id, table) {
+  const selection = serializeCaseFromInputList2(table);
+
   if (selection.empty()) {
     window.alert('At least one case is required to delete.');
     return false;
   }
 
-  var parameters = serialzeCaseForm(form, table, true);
-  if (selection.selectAll) {
-    parameters.selectAll = selection.selectAll;
-  }
-  parameters.case = selection.selectedCasesIds;
-
-  var c = confirm("Are you sure you want to delete test case(s) from this test plan?");
-  if (!c) {
+  if (! confirm("Are you sure you want to delete test case(s) from this test plan?")) {
     return false;
   }
 
-  var success = function(t) {
-    returnobj = jQ.parseJSON(t.responseText);
-    if (returnobj.rc == 0) {
-      parameters.a = 'initial';
-      constructPlanDetailsCasesZone(container, parameters.from_plan, parameters);
-      return true;
-    }
-    window.alert(returnobj.response);
-  };
-
-  var url = 'delete-cases/';
-  jQ.ajax({
-    'url': url,
-    'type': 'POST',
-    'data': parameters,
-    'traditional': true,
-    'success': function (data, textStatus, jqXHR) {
-      success(jqXHR);
-    },
-    'error': function (jqXHR, textStatus, errorThrown) {
-      json_failure(jqXHR);
-    }
+  selection.selectedCasesIds.forEach(function(case_id) {
+    jsonRPC('TestPlan.remove_case', [plan_id, case_id], function(data){
+        $(table).find(`tr[id="${case_id}"]`).hide();
+    });
   });
 }
 
@@ -750,16 +722,20 @@ function bindEventsOnLoadedCases(options) {
               var params = Nitrate.Utils.formSerialize(this);
               var refresh_case = function(t) {
                 var td = jQ('<td>', {colspan: 12});
-                var id = 'id_loading_' + params['object_pk'];
+                var id = 'id_loading_' + case_id;
                 td.append(getAjaxLoading(id));
                 jQ(content).html(td);
                 fireEvent(btn, 'click');
                 fireEvent(btn, 'click');
               }
-              submitComment(comment_container_t, params, refresh_case);
+
+                const comment_text = $(this).find('textarea[name=comment]').val();
+                jsonRPC('TestCase.add_comment', [case_id, comment_text], function(data){
+                    updateCommentsCount(case_id, true);
+                    refresh_case();
+                });
             };
-            jQ(content).parent().find('.update_form').unbind('submit');
-            jQ(content).parent().find('.update_form').bind('submit', cc_callback);
+            $(content).parent().find('.update_form').unbind('submit').bind('submit', cc_callback);
 
             // Observe the delete comment form
             var rc_callback = function(e) {
@@ -768,22 +744,12 @@ function bindEventsOnLoadedCases(options) {
               if (!window.confirm(default_messages.confirm.remove_comment)) {
                 return false;
               }
-              var params = Nitrate.Utils.formSerialize(this);
-              var refresh_case = function(t) {
-                var returnobj = jQ.parseJSON(t.responseText);
-                if (returnobj.rc != 0) {
-                  window.alert(returnobj.response);
-                  return false;
-                }
 
-                var td = jQ('<td>', {colspan: 12});
-                var id = 'id_loading_' + params['object_pk'];
-                td.append(getAjaxLoading(id));
-                jQ(content).html(td);
-                fireEvent(btn, 'click');
-                fireEvent(btn, 'click');
-              };
-              removeComment(this, refresh_case);
+                const comment_id = $(this).find('input[name=comment_id]').val();
+                const comment_widget = $(this).parents().find("#comment"+comment_id);
+                jsonRPC('TestCase.remove_comment', [case_id, comment_id], function(data){
+                    $(comment_widget).hide();
+                });
             };
             jQ(content).parent().find('.form_comment').unbind('submit');
             jQ(content).parent().find('.form_comment').bind('submit', rc_callback);
@@ -972,7 +938,7 @@ function constructPlanDetailsCasesZoneCallback(options) {
     jQ(form).bind('submit', function(e) {
       e.stopPropagation();
       e.preventDefault();
-      var params = serializeCaseForm2(form, table, true, true);
+      var params = serialzeCaseForm(form, table, true, true);
       constructPlanDetailsCasesZone(container, plan_id, params);
     });
 
@@ -1108,7 +1074,7 @@ function constructPlanDetailsCasesZone(container, plan_id, parameters) {
         });
       });
       jQ('#js-remove-case').bind('click', function() {
-        unlinkCasesFromPlan(container, navForm, casesTable);
+        unlinkCasesFromPlan(plan_id, casesTable);
       });
       jQ('#js-new-run').bind('click', function() {
         requestOperationUponFilteredCases({
@@ -1246,7 +1212,7 @@ function requestOperationUponFilteredCases(options) {
     return false;
   }
   // Exclude selected cases, that will be added from the selection.
-  var params = serializeCaseForm2(form, casesContainer, true, true);
+  var params = serialzeCaseForm(form, casesContainer, true, true);
   if (selection.selectAll) {
     params.selectAll = selection.selectAll;
   }

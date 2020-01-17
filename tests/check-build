@@ -8,10 +8,19 @@
 # first clean up the local environment
 echo "..... Clean up first"
 find . -type f -name '*.pyc' -delete
-find . -type d -name __pycache__ -delete
+find . -type d -name __pycache__ | xargs rm -rf
 find . -type d -name '*.egg-info' | xargs rm -rf
 rm -rf build/ .cache/ dist/ .eggs/ .tox/ .venv/
 rm -rf tcms/node_modules/
+
+# ensure fresh translations are compiled in
+find tcms/locale/ -name "*.mo" -delete
+./manage.py compilemessages
+
+if [ -z "$(find -type f -name "*.mo")" ]; then
+    echo "ERROR: .mo files not found"
+    exit 1
+fi
 
 echo "..... Installing npm dependencies"
 pushd tcms/
@@ -30,9 +39,13 @@ $(which python) setup.py sdist >/dev/null
 $(which python) setup.py bdist_wheel >/dev/null
 set +e
 
-# check rst formatting of README before building the package
-echo "..... Check rst formatting for PyPI"
-twine check dist/* || exit 1
+# we avoid installing twine inside buildroot b/c we're building
+# for release then. However twine is available locally and inside Travis CI
+if [ -n "$(which twine)" ]; then
+    # check rst formatting of README before building the package
+    echo "..... Check rst formatting for PyPI"
+    twine check dist/* || exit 1
+fi
 
 # then run some sanity tests
 for PKG_NAME in kiwitcms; do

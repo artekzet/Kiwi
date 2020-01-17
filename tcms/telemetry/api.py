@@ -1,5 +1,5 @@
 from django.db.models import Count
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from modernrpc.core import rpc_method
 
 from tcms.testcases.models import TestCase, TestCaseStatus
@@ -91,7 +91,7 @@ def status_matrix(query=None):
         columns[test_execution.run.run_id] = test_execution.run.summary
         test_execution_response = {
             'pk': test_execution.pk,
-            'class': test_execution.status.color_code(),
+            'color': test_execution.status.color,
             'run_id': test_execution.run_id,
         }
 
@@ -129,26 +129,23 @@ def execution_trends(query=None):
     count = {}
 
     for status in TestExecutionStatus.objects.all():
-        data_set[status.color_code()] = []
-
-        color = status.color()
-        if color not in colors:
-            colors.append(color)
+        data_set[status.name] = []
+        colors.append(status.color)
 
     run_id = 0
     for test_execution in TestExecution.objects.filter(**query).order_by('run_id'):
-        status = test_execution.status.color_code()
+        status = test_execution.status
 
         if test_execution.run_id == run_id:
-            if status in count:
-                count[status] += 1
+            if status.name in count:
+                count[status.name] += 1
             else:
-                count[status] = 1
+                count[status.name] = 1
 
         else:
             _append_status_counts_to_result(count, data_set)
 
-            count = {}
+            count = {status.name: 1}
             run_id = test_execution.run_id
             categories.append(run_id)
 
@@ -166,6 +163,63 @@ def execution_trends(query=None):
 
 
 def _append_status_counts_to_result(count, result):
-    for status in TestExecutionStatus.chart_status_names:
-        status_count = count.get(status, 0)
-        result.get(status).append(status_count)
+    for status in TestExecutionStatus.objects.all():
+        status_count = count.get(status.name, 0)
+        result.get(status.name).append(status_count)
+
+
+@rpc_method(name='Testing.test_case_health')
+def test_case_health(query=None):
+
+    if query is None:
+        query = {}
+
+    all_test_executions = TestExecution.objects.filter(**query)
+
+    test_executions = _get_count_for(all_test_executions)
+    failed_test_executions = _get_count_for(all_test_executions.filter(status__weight__lt=0))
+
+    data = {}
+    for value in test_executions:
+        data[value['case_id']] = {
+            'case_id': value['case_id'],
+            'case_summary': value['case__summary'],
+            'count': {
+                'all': value['count'],
+                'fail': 0
+            }
+        }
+
+    _count_test_executions(data, failed_test_executions, 'fail')
+
+    # remove all with 100% success rate, because they are not interesting
+    _remove_all_excellent_executions(data)
+
+    data = list(data.values())
+    data.sort(key=_sort_by_failing_rate, reverse=True)
+
+    if len(data) > 30:
+        data = data[:30]
+
+    return data
+
+
+def _remove_all_excellent_executions(data):
+    for key in dict.fromkeys(data):
+        if data[key]['count']['fail'] == 0:
+            data.pop(key)
+
+
+def _count_test_executions(data, test_executions, status):
+    for value in test_executions:
+        data[value['case_id']]['count'][status] = value['count']
+
+
+def _sort_by_failing_rate(element):
+    return element['count']['fail'] / element['count']['all']
+
+
+def _get_count_for(test_executions):
+    return test_executions.values(
+        'case_id', 'case__summary'
+    ).annotate(count=Count('case_id')).order_by('case_id')

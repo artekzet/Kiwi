@@ -28,14 +28,10 @@ function updateSelect(data, selector, id_attr, value_attr) {
 /*
     Used for on-change event handlers
 */
-function update_version_select_from_product(version_selector) {
-    if (version_selector === undefined) {
-        version_selector = '#id_version';
-    }
-
+function update_version_select_from_product() {
     var updateVersionSelectCallback = function(data) {
-        updateSelect(data, version_selector, 'id', 'value')
-    }
+        updateSelect(data, '#id_version', 'id', 'value')
+    };
 
     var product_id = $('#id_product').val();
     if (product_id) {
@@ -148,4 +144,22 @@ function escapeHTML(unsafe) {
       '\'': '&#039;'
     })[m]
   });
+}
+
+
+function treeViewBind() {
+    // collapse all child rows
+    $('.tree-list-view-pf').find(".list-group-item-container").addClass('hidden');
+
+    // click the list-view heading then expand a row
+    $('.list-group-item-header').click(function (event) {
+      if(!$(event.target).is('button, a, input, .fa-ellipsis-v')) {
+        var $this = $(this);
+        $this.find('.fa-angle-right').toggleClass('fa-angle-down');
+        var $itemContainer = $this.siblings('.list-group-item-container');
+        if ($itemContainer.children().length) {
+          $itemContainer.toggleClass('hidden');
+        }
+      }
+    });
 }

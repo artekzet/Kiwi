@@ -2,47 +2,21 @@
 """
     Helper which facilitates actual communications with GitLab.
 """
-
-import warnings
-import threading
+from tcms.issuetracker.base import IntegrationThread
 
 
-class GitlabThread(threading.Thread):
+class GitlabThread(IntegrationThread):
     """
         Execute Gitlab RPC code in a thread!
 
         Executed from the IssueTracker interface methods.
     """
 
-    def __init__(self, rpc, tracker, testcase, bug):
-        """
-            @rpc - Gitlab object
-            @tracker - BugSystem object
-            @testcase - TestCase object
-            @bug - Bug object
-        """
+    def __init__(self, rpc, bug_system, execution, bug_id):
+        repo_id = '/'.join(bug_system.base_url.strip().strip('/').split('/')[-2:])
+        self.repo = rpc.projects.get(repo_id)
 
-        self.rpc = rpc
-        self.testcase = testcase
-        self.bug = bug
-        repo_id = '/'.join(tracker.base_url.strip().strip('/').split('/')[-2:])
-        self.repo = self.rpc.projects.get(repo_id)
+        super().__init__(rpc, bug_system, execution, bug_id)
 
-        super(GitlabThread, self).__init__()
-
-    def run(self):
-        """
-            Link the test case with the issue!
-        """
-
-        try:
-            text = """---- Issue confirmed via test case ----
-
-URL: %s
-
-Summary: %s""" % (self.testcase.get_full_url(), self.testcase.summary)
-
-            self.repo.issues.get(self.bug.bug_id).notes.create(dict(body=text))
-        except Exception as err:  # pylint: disable=broad-except
-            message = '%s: %s' % (err.__class__.__name__, err)
-            warnings.warn(message)
+    def post_comment(self):
+        self.repo.issues.get(self.bug_id).notes.create({'body': self.text()})

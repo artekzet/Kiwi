@@ -11,17 +11,18 @@ Subpackages
 
 .. toctree::
 
+   tcms.bugs
    tcms.core
    tcms.issuetracker
    tcms.kiwi_auth
    tcms.management
+   tcms.rpc
    tcms.search
    tcms.telemetry
    tcms.testcases
    tcms.testplans
    tcms.testruns
    tcms.utils
-   tcms.xmlrpc
 
 Submodules
 ----------

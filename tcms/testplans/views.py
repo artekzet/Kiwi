@@ -1,34 +1,29 @@
 # -*- coding: utf-8 -*-
 
-import datetime
-
-from django.utils.decorators import method_decorator
+from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.urls import reverse
 from django.db.models import Count
-from django.contrib import messages
-from django.http import HttpResponseRedirect
-from django.http import Http404, HttpResponsePermanentRedirect
-from django.http import JsonResponse
+from django.http import (Http404, HttpResponsePermanentRedirect,
+                         HttpResponseRedirect, JsonResponse)
 from django.shortcuts import get_object_or_404, render
-from django.views.decorators.http import require_GET, require_POST
-from django.views.decorators.http import require_http_methods
-from django.utils.translation import ugettext_lazy as _
-from django.views.generic import View
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import (require_GET, require_http_methods,
+                                          require_POST)
+from django.views.generic import DetailView, View
+from django.views.generic.base import TemplateView
 from uuslug import slugify
 
 from tcms.search import remove_from_request_path
 from tcms.search.order import order_plan_queryset
-from tcms.testcases.forms import SearchCaseForm, QuickSearchCaseForm
-from tcms.testcases.models import TestCaseStatus
-from tcms.testcases.models import TestCase, TestCasePlan
-from tcms.testcases.views import get_selected_testcases
+from tcms.testcases.forms import QuickSearchCaseForm, SearchCaseForm
+from tcms.testcases.models import TestCase, TestCasePlan, TestCaseStatus
 from tcms.testcases.views import printable as testcases_printable
-from tcms.testplans.forms import ClonePlanForm
-from tcms.testplans.forms import NewPlanForm
-from tcms.testplans.forms import SearchPlanForm
-from tcms.testplans.models import TestPlan, PlanType
+from tcms.testplans.forms import ClonePlanForm, NewPlanForm, SearchPlanForm
+from tcms.testplans.models import PlanType, TestPlan
 from tcms.testruns.models import TestRun
 
 
@@ -72,7 +67,7 @@ class NewTestPlanView(View):
                 product_version=form.cleaned_data['product_version'],
                 type=form.cleaned_data['type'],
                 name=form.cleaned_data['name'],
-                create_date=datetime.datetime.now(),
+                create_date=timezone.now(),
                 extra_link=form.cleaned_data['extra_link'],
                 parent=form.cleaned_data['parent'],
                 text=form.cleaned_data['text'],
@@ -151,16 +146,20 @@ def get_all(request):  # pylint: disable=missing-permission-required
     return render(request, template_name, context_data)
 
 
-@require_GET
-def search(request):  # pylint: disable=missing-permission-required
-    form = SearchPlanForm(request.GET)
-    form.populate(product_id=request.GET.get('product'))
+class SearchTestPlanView(TemplateView):  # pylint: disable=missing-permission-required
 
-    context_data = {
-        'form': form,
-        'plan_types': PlanType.objects.all().only('pk', 'name').order_by('name'),
-    }
-    return render(request, 'testplans/search.html', context_data)
+    template_name = 'testplans/search.html'
+
+    def get_context_data(self, **kwargs):
+        form = SearchPlanForm(self.request.GET)
+        form.populate(product_id=self.request.GET.get('product'))
+
+        context_data = {
+            'form': form,
+            'plan_types': PlanType.objects.all().only('pk', 'name').order_by('name'),
+        }
+
+        return context_data
 
 
 def get_number_of_plans_cases(plan_ids):
@@ -248,28 +247,32 @@ def calculate_stats_for_testplans(plans):
     return plans
 
 
-def get(request,  # pylint: disable=missing-permission-required
-        plan_id, slug=None, template_name='plan/get.html'):
-    """Display the plan details."""
+class TestPlanGetView(DetailView):  # pylint: disable=missing-permission-required
 
-    try:
-        test_plan = TestPlan.objects.select_related().get(plan_id=plan_id)
-    except ObjectDoesNotExist:
-        raise Http404
+    template_name = 'plan/get.html'
+    http_method_names = ['get']
+    model = TestPlan
 
-    if slug is None:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        confirmed_status = TestCaseStatus.get_confirmed()
+        context['review_case_count'] = self.object.case.exclude(
+            case_status=confirmed_status).count()
+        context['run_case_count'] = self.object.case.filter(
+            case_status=confirmed_status).count()
+        return context
+
+
+class GetTestPlanRedirectView(DetailView):  # pylint: disable=missing-permission-required
+
+    http_method_names = ['get']
+    model = TestPlan
+
+    def get(self, request, *args, **kwargs):
+        test_plan = self.get_object()
         return HttpResponsePermanentRedirect(reverse('test_plan_url',
-                                                     args=[plan_id, slugify(test_plan.name)]))
-
-    # Initial the case counter
-    confirm_status_name = 'CONFIRMED'
-    test_plan.run_case = test_plan.case.filter(case_status__name=confirm_status_name)
-    test_plan.review_case = test_plan.case.exclude(case_status__name=confirm_status_name)
-
-    context_data = {
-        'test_plan': test_plan,
-    }
-    return render(request, template_name, context_data)
+                                                     args=[test_plan.pk,
+                                                           slugify(test_plan.name)]))
 
 
 @require_http_methods(['GET', 'POST'])
@@ -333,7 +336,7 @@ class Clone(View):
     http_method_names = ['post']
     template_name = 'testplans/clone.html'
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         if 'plan' not in request.POST:
             messages.add_message(request,
                                  messages.ERROR,
@@ -369,6 +372,7 @@ class Clone(View):
         return render(request, self.template_name, context_data)
 
 
+@method_decorator(permission_required('testplans.change_testplan'), name='dispatch')
 class ReorderCasesView(View):
     """Reorder cases"""
 
@@ -433,7 +437,7 @@ class LinkCasesView(View):  # pylint: disable=missing-permission-required
         return HttpResponseRedirect(reverse('test_plan_url', args=[plan_id, slugify(plan.name)]))
 
 
-class LinkCasesSearchView(View):
+class LinkCasesSearchView(View):  # pylint: disable=missing-permission-required
     """Search cases for linking to plan"""
 
     template_name = 'plan/search_case.html'
@@ -487,27 +491,8 @@ class LinkCasesSearchView(View):
         return render(request, self.template_name, context=context)
 
 
-class DeleteCasesView(View):
-    """Delete selected cases from plan"""
-
-    def post(self, request, plan_id):
-        plan = get_object_or_404(TestPlan.objects.only('pk'), pk=int(plan_id))
-
-        if 'case' not in request.POST:
-            return JsonResponse({
-                'rc': 1,
-                'response': 'At least one case is required to delete.'
-            })
-
-        cases = get_selected_testcases(request).only('pk')
-        for case in cases:
-            plan.delete_case(case=case)
-
-        return JsonResponse({'rc': 0, 'response': 'ok'})
-
-
 @require_POST
-def printable(request):
+def printable(request):  # pylint: disable=missing-permission-required
     """Create the printable copy for plan"""
     plan_pk = request.POST.get('plan', 0)
 

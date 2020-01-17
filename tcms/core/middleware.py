@@ -1,11 +1,11 @@
 # pylint: disable=no-self-use, too-few-public-methods
 
-from django.urls import reverse
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.sites.models import Site
+from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class CsrfDisableMiddleware(MiddlewareMixin):

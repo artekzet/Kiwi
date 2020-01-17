@@ -1,17 +1,18 @@
-# pylint: disable=wildcard-import, unused-wildcard-import
-
+# pylint: disable=wildcard-import, unused-wildcard-import, invalid-name
+# pylint: disable=import-outside-toplevel,wrong-import-position, protected-access
 import os
 import warnings
 import pkg_resources
 
-# prented there are telemetry plugins installed so we can check
+# pretend there are plugins (custom telemetry) installed so we can check
 # the plugin loading code in settings/common.py
 dist = pkg_resources.Distribution(__file__)
 entry_point = pkg_resources.EntryPoint.parse('a_fake_plugin = tcms.telemetry.tests.plugin',
                                              dist=dist)
-dist._ep_map = {'kiwitcms.telemetry.plugins': {'a_fake_plugin': entry_point}}
+dist._ep_map = {'kiwitcms.plugins': {'a_fake_plugin': entry_point}}
 pkg_resources.working_set.add(dist)
 
+# this needs to be here so that  discovery tests can work
 from tcms.settings.devel import *  # noqa: F401,F403
 
 
